@@ -95,25 +95,21 @@ namespace Compiler.Syntax
 
                 string subExpression = left + " " + right + " " + "f" + parentToken.Value;
 
-                var subExpressionToken = new SemanticToken
+                tokenStack.Push(new SemanticToken
                 {
                     Type = TokenType.Real,
                     Value = subExpression
-                };
-
-                tokenStack.Push(subExpressionToken);
+                });
             }
             else if (lhs.Type == TokenType.Int && rhs.Type == TokenType.Int)
             {
                 var subExpression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
-
-                var subExpressionToken = new SemanticToken
+                
+                tokenStack.Push(new SemanticToken
                 {
                     Type = TokenType.Int,
                     Value = subExpression
-                };
-
-                tokenStack.Push(subExpressionToken);
+                });
             }
             else if (lhs.Type == TokenType.String || rhs.Type == TokenType.String)
             {
@@ -131,6 +127,12 @@ namespace Compiler.Syntax
                 string right = ConvertStringToGforthString(rhs);
 
                 string subExpression = left + " " + right + " " + "s" + parentToken.Value;
+
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = TokenType.String,
+                    Value = subExpression
+                });
             }
         }
 
