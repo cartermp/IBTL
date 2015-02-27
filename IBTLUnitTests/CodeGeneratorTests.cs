@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace IBTLUnitTests
 {
+    /// <summary>
+    /// tests things
+    /// </summary>
     [TestClass]
     public class CodeGeneratorTests
     {
