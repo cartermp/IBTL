@@ -49,6 +49,7 @@
     <Compile Include="Syntax\ASTNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Syntax\SemanticToken.cs" />
     <Compile Include="Syntax\Token.cs" />
     <Compile Include="Syntax\TokenType.cs" />
   </ItemGroup>

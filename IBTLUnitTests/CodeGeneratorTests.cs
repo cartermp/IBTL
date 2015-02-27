@@ -11,6 +11,9 @@ namespace IBTLUnitTests
     [TestClass]
     public class CodeGeneratorTests
     {
+        /// <summary>
+        /// Tests (+ 1 2).
+        /// </summary>
         [TestMethod]
         public void BasicBinaryOpTest()
         {
@@ -41,6 +44,9 @@ namespace IBTLUnitTests
             Assert.IsTrue(expected == actual);
         }
 
+        /// <summary>
+        /// Tests (+ 1.0 2).
+        /// </summary>
         [TestMethod]
         public void BasicBinaryOpWithRealTest()
         {
@@ -63,7 +69,7 @@ namespace IBTLUnitTests
                 }
             };
 
-             AST ast = new AST(nodes);
+            AST ast = new AST(nodes);
 
             string expected = "1.0e 2 s>f f+ CR";
             string actual = ast.ToGforth();
@@ -71,6 +77,53 @@ namespace IBTLUnitTests
             Assert.IsTrue(expected == actual);
         }
 
+        /// <summary>
+        /// Tests (+ 1.0 (- 1 2)).
+        /// </summary>
+        [TestMethod]
+        public void BinaryOpWithRealsAndIntsTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "-", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "1", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "2", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = "1.0e 1 2 - s>f f+ CR";
+            string actual = ast.ToGforth();
+
+            Assert.IsTrue(expected == actual);
+        }
+
+        /// <summary>
+        /// Tests (+ "smoke weed errday" "swagswagswag").
+        /// </summary>
         [TestMethod]
         public void BasicStringTest()
         {

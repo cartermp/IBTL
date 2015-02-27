@@ -39,20 +39,126 @@ namespace Compiler.Syntax
 
         public string ToGforth()
         {
-            List<Token> tokens = new List<Token>();
-            string gforth = string.Empty;
+            Stack<SemanticToken> tokenStack = new Stack<SemanticToken>();
+            mNodes.ForEach(node => Walk2(node, ref tokenStack));
+            //List<Token> tokens = new List<Token>();
+            //string gforth = string.Empty;
 
-            mNodes.ForEach(node => Walk(node, tokens, ref gforth));
+            //mNodes.ForEach(node => Walk(node, tokens, ref gforth));
 
-            return gforth + "CR";
+            return tokenStack.Pop().Value + " CR";
         }
+
+        private void Walk2(ASTNode node, ref Stack<SemanticToken> tokenStack)
+        {
+            if (node.Children == null || !node.Children.Any())
+            {
+                var semanticToken = new SemanticToken
+                {
+                    Type = node.Token.Type,
+                    Value = node.Token.Value
+                };
+
+                tokenStack.Push(semanticToken);
+                return;
+            }
+            else
+            {
+                foreach (var child in node.Children)
+                {
+                    Walk2(child, ref tokenStack);
+                }
+            }
+
+            var parentToken = node.Token;
+
+            if (parentToken.Type == TokenType.BinaryOperator)
+            {
+                HandleBinaryOperator(ref tokenStack, parentToken);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tokenStack"></param>
+        /// <param name="parentToken"></param>
+        private static void HandleBinaryOperator(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            var rhs = tokenStack.Pop();
+            var lhs = tokenStack.Pop();
+
+            if (lhs.Type == TokenType.Real || rhs.Type == TokenType.Real)
+            {
+                string left = ConvertNumberToGforthReal(lhs);
+                string right = ConvertNumberToGforthReal(rhs);
+
+                string subExpression = left + " " + right + " " + "f" + parentToken.Value;
+
+                var subExpressionToken = new SemanticToken
+                {
+                    Type = TokenType.Real,
+                    Value = subExpression
+                };
+
+                tokenStack.Push(subExpressionToken);
+            }
+            else if (lhs.Type == TokenType.Int && rhs.Type == TokenType.Int)
+            {
+                var subExpression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
+
+                var subExpressionToken = new SemanticToken
+                {
+                    Type = TokenType.Int,
+                    Value = subExpression
+                };
+
+                tokenStack.Push(subExpressionToken);
+            }
+            else if (lhs.Type == TokenType.String || rhs.Type == TokenType.String)
+            {
+                if (parentToken.Value != "+")
+                {
+                    throw new SemanticException("Strings can only be concatenated.  " + parentToken.Value + " is not a valid operator for strings.");
+                }
+
+                if (lhs.Type != TokenType.String || rhs.Type != TokenType.String)
+                {
+                    throw new SemanticException("Strings cannot be concatenated by non-strings.");
+                }               
+
+                string left = ConvertStringToGforthString(lhs);
+                string right = ConvertStringToGforthString(rhs);
+
+                string subExpression = left + " " + right + " " + "s" + parentToken.Value;
+            }
+        }
+
+        /// <summary>
+        /// Converts a numeric token into a GForth real.
+        /// </summary>
+        private static string ConvertNumberToGforthReal(SemanticToken token)
+        {
+            return token.Type == TokenType.Int ? token.Value + " s>f"
+                : !token.Value.Contains("e") ? token.Value + "e" : token.Value;
+        }
+
+        /// <summary>
+        /// Converts a string token into a GForth string.
+        /// </summary>
+        private static string ConvertStringToGforthString(SemanticToken token)
+        {
+            return "s\" " + token.Value + "\"";
+        }
+
+        #region Walk
 
         /// <summary>
         /// Traverses the IBTL AST in post-order fashion.
         /// </summary>
         private bool Walk(ASTNode node, List<Token> tokens, ref string gforth)
         {
-            int start = tokens.Count > 0 ? tokens.Count - 1 : 0;
+            int start = tokens.Count > 0 ? tokens.Count : 0;
 
             bool containsReal = false;
 
@@ -171,5 +277,7 @@ namespace Compiler.Syntax
                 gforth += " ";
             }
         }
+
+        #endregion
     }
 }
