@@ -39,17 +39,21 @@ namespace Compiler.Syntax
 
         public string ToGforth()
         {
+            // Defining our own integer power function here so that we don't
+            // have to incorporate any int->float->int casting fuckery.
+            string gforthIntegerPower = ":^ 1 swap 0 u+do over * loop nip ; ";
+
             Stack<SemanticToken> tokenStack = new Stack<SemanticToken>();
-            mNodes.ForEach(node => Walk2(node, ref tokenStack));
-            //List<Token> tokens = new List<Token>();
-            //string gforth = string.Empty;
 
-            //mNodes.ForEach(node => Walk(node, tokens, ref gforth));
+            mNodes.ForEach(node => Walk(node, ref tokenStack));
 
-            return tokenStack.Pop().Value + " CR";
+            return gforthIntegerPower + tokenStack.Pop().Value + " CR";
         }
 
-        private void Walk2(ASTNode node, ref Stack<SemanticToken> tokenStack)
+        /// <summary>
+        /// Performs a Postorder walk of the AST, generating Gforth code.
+        /// </summary>
+        private void Walk(ASTNode node, ref Stack<SemanticToken> tokenStack)
         {
             if (node.Children == null || !node.Children.Any())
             {
@@ -66,24 +70,61 @@ namespace Compiler.Syntax
             {
                 foreach (var child in node.Children)
                 {
-                    Walk2(child, ref tokenStack);
+                    Walk(child, ref tokenStack);
                 }
             }
 
             var parentToken = node.Token;
 
-            if (parentToken.Type == TokenType.BinaryOperator)
+            switch (parentToken.Type)
             {
-                HandleBinaryOperator(ref tokenStack, parentToken);
+                case TokenType.BinaryOperator:
+                    HandleBinaryOperator(ref tokenStack, parentToken);
+                    break;
+                case TokenType.UnaryOperator:
+                    HandleUnaryOperator(ref tokenStack, parentToken);
+                    break;
             }
         }
 
         /// <summary>
-        /// 
+        /// Handles generating GForth code for a subtree whose root is a Unary Operator (non-relational).
         /// </summary>
-        /// <param name="tokenStack"></param>
-        /// <param name="parentToken"></param>
-        private static void HandleBinaryOperator(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        private void HandleUnaryOperator(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            var operand = tokenStack.Pop();
+
+            if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real)
+            {
+                throw new SemanticException("Trig operators only work on reals.");
+            }
+
+            if (operand.Type == TokenType.Real)
+            {
+                string number = ConvertNumberToGforthReal(operand);
+                string subExpression = number + " " + "f" + parentToken.Value;
+
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = TokenType.Real,
+                    Value = subExpression
+                });
+            }
+            else if (operand.Type == TokenType.Int)
+            {
+                string subExpression = operand.Value + " " + parentToken.Value;
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = TokenType.Real,
+                    Value = subExpression
+                });
+            }
+        }
+
+        /// <summary>
+        /// Handles generating Gforth code for a subtree whose root is a Binary Operator.
+        /// </summary>
+        private void HandleBinaryOperator(ref Stack<SemanticToken> tokenStack, Token parentToken)
         {
             var rhs = tokenStack.Pop();
             var lhs = tokenStack.Pop();
@@ -104,7 +145,7 @@ namespace Compiler.Syntax
             else if (lhs.Type == TokenType.Int && rhs.Type == TokenType.Int)
             {
                 var subExpression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
-                
+
                 tokenStack.Push(new SemanticToken
                 {
                     Type = TokenType.Int,
@@ -121,7 +162,7 @@ namespace Compiler.Syntax
                 if (lhs.Type != TokenType.String || rhs.Type != TokenType.String)
                 {
                     throw new SemanticException("Strings cannot be concatenated by non-strings.");
-                }               
+                }
 
                 string left = ConvertStringToGforthString(lhs);
                 string right = ConvertStringToGforthString(rhs);
@@ -139,7 +180,7 @@ namespace Compiler.Syntax
         /// <summary>
         /// Converts a numeric token into a GForth real.
         /// </summary>
-        private static string ConvertNumberToGforthReal(SemanticToken token)
+        private string ConvertNumberToGforthReal(SemanticToken token)
         {
             return token.Type == TokenType.Int ? token.Value + " s>f"
                 : !token.Value.Contains("e") ? token.Value + "e" : token.Value;
@@ -148,138 +189,18 @@ namespace Compiler.Syntax
         /// <summary>
         /// Converts a string token into a GForth string.
         /// </summary>
-        private static string ConvertStringToGforthString(SemanticToken token)
+        private string ConvertStringToGforthString(SemanticToken token)
         {
             return "s\" " + token.Value + "\"";
         }
 
-        #region Walk
-
         /// <summary>
-        /// Traverses the IBTL AST in post-order fashion.
+        /// Determines if a token is a trig operator.
         /// </summary>
-        private bool Walk(ASTNode node, List<Token> tokens, ref string gforth)
+        private bool IsATrigOperand(Token token)
         {
-            int start = tokens.Count > 0 ? tokens.Count : 0;
-
-            bool containsReal = false;
-
-            if (node.Children == null || !node.Children.Any())
-            {
-                tokens.Add(node.Token);
-                return node.Token.Type == TokenType.Real;
-            }
-            else
-            {
-                foreach (var child in node.Children)
-                {
-                    // If we've already seen a Real, we don't want to overwrite our flag.
-                    if (containsReal)
-                    {
-                        Walk(child, tokens, ref gforth);
-                    }
-                    else
-                    {
-                        containsReal = Walk(child, tokens, ref gforth);
-                    }
-                }
-            }
-
-            tokens.Add(node.Token);
-
-            if (containsReal)
-            {
-                HandleReal(tokens, start, ref gforth);
-            }
-            else
-            {
-                HandleNoReals(tokens, start, ref gforth);
-            }
-
-            return containsReal;
+            string val = token.Value;
+            return val == "sin" || val == "cos" || val == "tan";
         }
-
-        /// <summary>
-        /// Handles when a given subtree has no real tokens.
-        /// </summary>
-        private void HandleNoReals(List<Token> tokens, int start, ref string gforth)
-        {
-            bool sawString = false;
-
-            for (int i = start; i < tokens.Count; i++)
-            {
-                TokenType type = tokens[i].Type;
-                string value = tokens[i].Value;
-
-                if (!sawString && type == TokenType.String)
-                {
-                    sawString = true;
-                }
-
-                if (sawString)
-                {
-                    if (type == TokenType.BinaryOperator)
-                    {
-                        if (value != "+")
-                        {
-                            throw new SemanticException("Must use '+' as concatenation operator.");
-                        }
-
-                        gforth += "s" + value;
-                    }
-                    else if (type == TokenType.String)
-                    {
-                        gforth += "s\" " + value + "\"";
-                    }
-                    else
-                    {
-                        throw new SemanticException("Non-strings are no valid for string literals.");
-                    }
-                }
-                else
-                {
-                    gforth += value;
-                }
-
-                gforth += " ";
-            }
-        }
-
-        /// <summary>
-        /// Handles generating Gforth when a given subtree contains a real.
-        /// </summary>
-        private void HandleReal(List<Token> tokens, int start, ref string gforth)
-        {
-            for (int i = start; i < tokens.Count; i++)
-            {
-                TokenType type = tokens[i].Type;
-                string value = tokens[i].Value;
-
-                if (type == TokenType.BinaryOperator || type == TokenType.UnaryOperator)
-                {
-                    gforth += "f" + tokens[i].Value;
-                }
-                else if (type == TokenType.Int)
-                {
-                    gforth += value + " s>f";
-                }
-                else if (type == TokenType.Real)
-                {
-                    gforth += value;
-                    if (!value.Contains("e"))
-                    {
-                        gforth += "e";
-                    }
-                }
-                else
-                {
-                    throw new SemanticException("wah");
-                }
-
-                gforth += " ";
-            }
-        }
-
-        #endregion
     }
 }

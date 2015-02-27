@@ -10,6 +10,8 @@ namespace Compiler
 {
     public static class Lexer
     {
+        private static Dictionary<string, Token> m_table = new Dictionary<string, Token>();
+
         /// <summary>
         /// Top-level function.  Returns the next token and delegates work.
         /// Trims the input string as necessary.
@@ -62,6 +64,34 @@ namespace Compiler
                 Type = c == '(' ? TokenType.LeftParenthesis : TokenType.RightParenthesis,
                 Value = c + string.Empty
             };
+        }
+
+        /// <summary>
+        /// Preloads the symbol table with some known tokens.
+        /// </summary>
+        private static void PreloadTable()
+        {
+            m_table.Add("true", new Token{ Type = TokenType.True, Value = "true"});
+            m_table.Add("false", new Token { Type = TokenType.False, Value = "false" });
+
+            m_table.Add("and", new Token { Type = TokenType.RelationalOperator, Value = "and" });
+            m_table.Add("or", new Token { Type = TokenType.RelationalOperator, Value = "or" });
+
+            m_table.Add("not", new Token { Type = TokenType.UnaryRelationalOperator, Value = "not" });
+
+            m_table.Add("sin", new Token { Type = TokenType.UnaryOperator, Value = "sin" });
+            m_table.Add("cos", new Token { Type = TokenType.UnaryOperator, Value = "cos" });
+            m_table.Add("tan", new Token { Type = TokenType.UnaryOperator, Value = "tan" });
+
+            m_table.Add("int", new Token { Type = TokenType.Type, Value = "int" });
+            m_table.Add("real", new Token { Type = TokenType.Type, Value = "real" });
+            m_table.Add("bool", new Token { Type = TokenType.Type, Value = "bool" });
+            m_table.Add("string", new Token { Type = TokenType.Type, Value = "string" });
+
+            m_table.Add("let", new Token { Type = TokenType.Statement, Value = "let" });
+            m_table.Add("stdout", new Token { Type = TokenType.Statement, Value = "stdout" });
+            m_table.Add("while", new Token { Type = TokenType.Statement, Value = "while" });
+            m_table.Add("if", new Token { Type = TokenType.Statement, Value = "if" });
         }
 
         /// <summary>
@@ -191,6 +221,13 @@ namespace Compiler
             // Need to place last char back in, lest we miss first character
             // of the next token.
             input = c + input;
+
+            Token t;
+
+            if (m_table.TryGetValue(input, out t))
+            {
+                return t;
+            }
 
             return new Token { Type = TokenType.Identifier, Value = tmp };
         }
