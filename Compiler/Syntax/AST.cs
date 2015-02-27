@@ -59,13 +59,21 @@ namespace Compiler.Syntax
             if (node.Children == null || !node.Children.Any())
             {
                 tokens.Add(node.Token);
-                return containsReal;
+                return node.Token.Type == TokenType.Real;
             }
             else
             {
                 foreach (var child in node.Children)
                 {
-                    containsReal = Walk(child, tokens, ref gforth);
+                    // If we've already seen a Real, we don't want to overwrite our flag.
+                    if (containsReal)
+                    {
+                        Walk(child, tokens, ref gforth);
+                    }
+                    else
+                    {
+                        containsReal = Walk(child, tokens, ref gforth);
+                    }
                 }
             }
 
@@ -97,7 +105,7 @@ namespace Compiler.Syntax
 
                 if (!sawString && type == TokenType.String)
                 {
-                    sawString = true; 
+                    sawString = true;
                 }
 
                 if (sawString)
@@ -145,7 +153,7 @@ namespace Compiler.Syntax
                 }
                 else if (type == TokenType.Int)
                 {
-                    gforth += " s>f";
+                    gforth += value + " s>f";
                 }
                 else if (type == TokenType.Real)
                 {

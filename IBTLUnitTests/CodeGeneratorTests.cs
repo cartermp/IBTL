@@ -42,6 +42,36 @@ namespace IBTLUnitTests
         }
 
         [TestMethod]
+        public void BasicBinaryOpWithRealTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+             AST ast = new AST(nodes);
+
+            string expected = "1.0e 2 s>f f+ CR";
+            string actual = ast.ToGforth();
+
+            Assert.IsTrue(expected == actual);
+        }
+
+        [TestMethod]
         public void BasicStringTest()
         {
             var nodes = new List<ASTNode>
