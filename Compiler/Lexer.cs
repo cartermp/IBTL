@@ -14,6 +14,11 @@ namespace Compiler
 
         private Token m_peekedToken;
 
+        private char m_prevChar;
+
+        /// <summary>
+        /// Gets an IBTL token.  Uses the peeked token if available; otherwise, extracts from the input string.
+        /// </summary>
         public Token GetToken(ref string input)
         {
             if (m_peekedToken != null)
@@ -26,6 +31,9 @@ namespace Compiler
             return PeekToken(ref input); ;
         }
 
+        /// <summary>
+        /// Extracts a token from the input string, storing it in the temporary peek buffer.
+        /// </summary>
         public Token PeekToken(ref string input)
         {
             if (m_peekedToken == null)
@@ -56,6 +64,11 @@ namespace Compiler
                 return LexNumber(ref input, c);
             }
 
+            if (c == '-' && m_prevChar == '(')
+            {
+                return new Token { Type = TokenType.UnaryOperator, Value = "-" };
+            }
+
             if (IsBinop(c))
             {
                 return new Token { Type = TokenType.BinaryOperator, Value = c + string.Empty };
@@ -83,6 +96,12 @@ namespace Compiler
                 throw new LexerException("not paren", 1);
             }
 
+            // We set this so that we can distinguish between unary and binary minus.
+            if (c == '(')
+            {
+                m_prevChar = '(';
+            }
+
             return new Token
             {
                 Type = c == '(' ? TokenType.LeftParenthesis : TokenType.RightParenthesis,
@@ -98,10 +117,10 @@ namespace Compiler
             m_table.Add("true", new Token { Type = TokenType.True, Value = "true" });
             m_table.Add("false", new Token { Type = TokenType.False, Value = "false" });
 
-            m_table.Add("and", new Token { Type = TokenType.RelationalOperator, Value = "and" });
-            m_table.Add("or", new Token { Type = TokenType.RelationalOperator, Value = "or" });
+            m_table.Add("and", new Token { Type = TokenType.BinaryOperator, Value = "and" });
+            m_table.Add("or", new Token { Type = TokenType.BinaryOperator, Value = "or" });
 
-            m_table.Add("not", new Token { Type = TokenType.UnaryRelationalOperator, Value = "not" });
+            m_table.Add("not", new Token { Type = TokenType.UnaryOperator, Value = "not" });
 
             m_table.Add("sin", new Token { Type = TokenType.UnaryOperator, Value = "sin" });
             m_table.Add("cos", new Token { Type = TokenType.UnaryOperator, Value = "cos" });
@@ -131,7 +150,7 @@ namespace Compiler
                 tmp += GetFirstCharAndTrimOff(ref input);
             }
 
-            return new Token { Value = tmp, Type = TokenType.RelationalOperator };
+            return new Token { Value = tmp, Type = TokenType.BinaryOperator };
         }
 
         /// <summary>

@@ -17,8 +17,6 @@ namespace Compiler.Syntax
         Assignment,
         BinaryOperator,
         UnaryOperator,
-        RelationalOperator,
-        UnaryRelationalOperator,
 
         Int,
         Real,

@@ -75,7 +75,6 @@ namespace Compiler
                     ParseAssign(node, ref contents);
                     break;
                 case TokenType.BinaryOperator:
-                case TokenType.RelationalOperator:
                     node.Add(lastToken);
                     ParseBinaryOperator(node, ref contents);
                     break;

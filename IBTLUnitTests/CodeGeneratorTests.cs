@@ -12,6 +12,39 @@ namespace IBTLUnitTests
     public class CodeGeneratorTests
     {
         /// <summary>
+        /// Tests (> 1 2) => "1 2 > CR".
+        /// </summary>
+        [TestMethod]
+        public void BasicRelationalOperator()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1", Type = TokenType.Int }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 > CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
         /// Tests (^ 1 2) => "1 2 ^ CR".
         /// </summary>
         [TestMethod]
@@ -41,7 +74,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 ^ CR";
             string actual = ast.ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -74,7 +107,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 + CR";
             string actual = ast.ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -107,7 +140,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e 2 s>f f+ CR";
             string actual = ast.ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -151,7 +184,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e 1 2 - s>f f+ CR";
             string actual = ast.ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -184,7 +217,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "s\" smoke weed errday\" s\" swagswagswag\" s+ CR";
             string actual = ast.ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -211,7 +244,7 @@ namespace IBTLUnitTests
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fsin CR";
             string actual = new AST(nodes).ToGforth();
 
-            Assert.IsTrue(expected == actual);
+            Assert.AreEqual(expected, actual);
         }
 
         /// <summary>
@@ -243,6 +276,55 @@ namespace IBTLUnitTests
             };
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fcos fsin CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (- (cos 1.0) (+ 1 2)) => "1.0e fcos 1 2 + s>f f-
+        /// </summary>
+        [TestMethod]
+        public void UnaryAndBinaryTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "-", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "cos", Type = TokenType.UnaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "1", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "2", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fcos 1 2 + s>f f- CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.IsTrue(expected == actual);
