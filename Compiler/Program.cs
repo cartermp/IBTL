@@ -12,7 +12,7 @@ namespace Compiler
         {
             foreach (var file in string.Join(" ", args).Split(' '))
             {
-                var ast = Parser.Parse(file);
+                var ast = new Parser().Parse(file);
                 string gforth = ast.ToGforth();
             }
         }

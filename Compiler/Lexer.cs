@@ -8,15 +8,39 @@ using System.Threading.Tasks;
 
 namespace Compiler
 {
-    public static class Lexer
+    public class Lexer
     {
-        private static Dictionary<string, Token> m_table = new Dictionary<string, Token>();
+        private Dictionary<string, Token> m_table = new Dictionary<string, Token>();
+
+        private Token m_peekedToken;
+
+        public Token GetToken(ref string input)
+        {
+            if (m_peekedToken != null)
+            {
+                Token t = m_peekedToken;
+                m_peekedToken = null;
+                return t;
+            }
+
+            return PeekToken(ref input); ;
+        }
+
+        public Token PeekToken(ref string input)
+        {
+            if (m_peekedToken == null)
+            {
+                m_peekedToken = PeekToken(ref input);
+            }
+
+            return m_peekedToken;
+        }
 
         /// <summary>
         /// Top-level function.  Returns the next token and delegates work.
         /// Trims the input string as necessary.
         /// </summary>
-        public static Token GetToken(ref string input)
+        private Token GetTokenImpl(ref string input)
         {
             input.TrimStart();
 
@@ -53,7 +77,7 @@ namespace Compiler
                 return LexString(ref input, c);
             }
 
-            
+
             if (!IsParen(c))
             {
                 throw new LexerException("not paren", 1);
@@ -69,9 +93,9 @@ namespace Compiler
         /// <summary>
         /// Preloads the symbol table with some known tokens.
         /// </summary>
-        private static void PreloadTable()
+        private void PreloadTable()
         {
-            m_table.Add("true", new Token{ Type = TokenType.True, Value = "true"});
+            m_table.Add("true", new Token { Type = TokenType.True, Value = "true" });
             m_table.Add("false", new Token { Type = TokenType.False, Value = "false" });
 
             m_table.Add("and", new Token { Type = TokenType.RelationalOperator, Value = "and" });
@@ -97,7 +121,7 @@ namespace Compiler
         /// <summary>
         /// Lexes a relational operator.
         /// </summary>
-        private static Token LexRelop(ref string input, char c)
+        private Token LexRelop(ref string input, char c)
         {
             string tmp = string.Empty + c;
 
@@ -113,7 +137,7 @@ namespace Compiler
         /// <summary>
         /// Lexes a hard-coded string.
         /// </summary>
-        private static Token LexString(ref string input, char c)
+        private Token LexString(ref string input, char c)
         {
             string tmp = string.Empty + c;
 
@@ -129,7 +153,7 @@ namespace Compiler
         /// <summary>
         /// Lexes a number.
         /// </summary>
-        private static Token LexNumber(ref string input, char c)
+        private Token LexNumber(ref string input, char c)
         {
             string numStr = string.Empty;
             int radixCount = 0;
@@ -174,7 +198,7 @@ namespace Compiler
         /// <summary>
         /// Lexes a number with an exponent, as per C specification.
         /// </summary>
-        private static Token LexNumberWithExponent(ref string input, string numStr, char c)
+        private Token LexNumberWithExponent(ref string input, string numStr, char c)
         {
             bool isSigned = false;
             char peek;
@@ -208,7 +232,7 @@ namespace Compiler
         /// <summary>
         /// Handles parsing an identifier.  Valid C-style identifier rules.
         /// </summary>
-        private static Token LexIdentifier(ref string input, char c)
+        private Token LexIdentifier(ref string input, char c)
         {
             string tmp = string.Empty;
 
@@ -232,22 +256,22 @@ namespace Compiler
             return new Token { Type = TokenType.Identifier, Value = tmp };
         }
 
-        private static bool IsRelop(char c)
+        private bool IsRelop(char c)
         {
             return c == '>' || c == '-' || c == '*' || c == '=';
         }
 
-        private static bool IsBinop(char c)
+        private bool IsBinop(char c)
         {
             return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '^';
         }
 
-        private static bool IsParen(char c)
+        private bool IsParen(char c)
         {
             return c == ')' || c == '(';
         }
 
-        private static char GetFirstCharAndTrimOff(ref string input)
+        private char GetFirstCharAndTrimOff(ref string input)
         {
             char c = input.First();
             input.Substring(1, input.Length - 1);

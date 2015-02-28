@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\LexerException.cs" />
+    <Compile Include="Exceptions\ParserException.cs" />
     <Compile Include="Exceptions\SemanticException.cs" />
     <Compile Include="Lexer.cs" />
     <Compile Include="Parser.cs" />

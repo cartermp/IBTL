@@ -26,6 +26,11 @@ namespace Compiler.Syntax
             Children.Add(new ASTNode(token));
         }
 
+        public ASTNode BackChild()
+        {
+            return Children.Last();
+        }
+
         public Token LastChild()
         {
             return Children.Last().Token;

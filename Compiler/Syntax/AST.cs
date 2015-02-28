@@ -32,9 +32,9 @@ namespace Compiler.Syntax
             return !mNodes.Any();
         }
 
-        public ASTNode Back()
+        public void Add(ASTNode node)
         {
-            return mNodes.Last();
+            mNodes.Add(node);
         }
 
         public string ToGforth()
