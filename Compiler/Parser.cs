@@ -1,11 +1,7 @@
 ﻿using Compiler.Exceptions;
 using Compiler.Syntax;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Compiler
 {
@@ -16,23 +12,70 @@ namespace Compiler
         /// <summary>
         /// Top-level parsing function.
         /// </summary>
-        public AST Parse(string fileName)
+        public AST Parse(string expression)
         {
-            string contents = GetFileContents(fileName);
-
             AST ast = new AST();
 
-            var lastToken = m_lexer.GetToken(ref contents);
+            m_lexer.PreloadTable();
 
-            ASTNode node = new ASTNode();
+            var lastToken = m_lexer.GetToken(ref expression);
 
-            while (m_lexer.PeekToken(ref contents) != null)
+            while (!string.IsNullOrWhiteSpace(expression))
             {
-                ParseExpression(lastToken, ref contents, node);
-                ast.Add(node);
+                ast.Add(new ASTNode());
+                ParseExpression(lastToken, ref expression, ast.Back());
+                //S(lastToken, ref expression, ast.Back());
             }
 
             return ast;
+        }
+
+        private void S(Token lastToken, ref string contents, ASTNode node)
+        {
+            if (lastToken.Type == TokenType.LeftParenthesis)
+            {
+                SDoublePrime(m_lexer.GetToken(ref contents), ref contents, node);
+            }
+
+            if (lastToken.Type == TokenType.RightParenthesis)
+            {
+                return;
+            }
+            else
+            {
+                ParseInner(lastToken, ref contents, node);
+                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
+            }
+        }
+
+        private void SPrime(Token lastToken, ref string contents, ASTNode node)
+        {
+            if (lastToken == null || string.IsNullOrWhiteSpace(contents))
+            {
+                return;
+            }
+
+            S(lastToken, ref contents, node);
+            SPrime(m_lexer.GetToken(ref contents), ref contents, node);
+        }
+
+        private void SDoublePrime(Token lastToken, ref string contents, ASTNode node)
+        {
+            if (lastToken.Type == TokenType.RightParenthesis)
+            {
+                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
+            }
+            else
+            {
+                S(lastToken, ref contents, node);
+                lastToken = m_lexer.GetToken(ref contents);
+                if (lastToken.Type != TokenType.RightParenthesis)
+                {
+                    throw new ParserException("Expected right parenthesis");
+
+                }
+                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
+            }
         }
 
         /// <summary>
@@ -40,26 +83,41 @@ namespace Compiler
         /// </summary>
         private void ParseExpression(Token lastToken, ref string contents, ASTNode node)
         {
+        begin:
             if (lastToken.Type == TokenType.LeftParenthesis)
             {
-                lastToken = m_lexer.GetToken(ref contents);
-                ParseExpression(lastToken, ref contents, node.BackChild());
+                if (!string.IsNullOrWhiteSpace(contents))
+                {
+                    ParseExpression(m_lexer.GetToken(ref contents), ref contents, node.Children == null ? node : node.BackChild());
+                    if (!string.IsNullOrWhiteSpace(contents))
+                    {
+                        lastToken = m_lexer.GetToken(ref contents);
+                        goto begin;
+                    }
+                }
             }
 
             while (lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
             {
-                lastToken = m_lexer.GetToken(ref contents);
                 ParseInner(lastToken, ref contents, node);
+                lastToken = m_lexer.GetToken(ref contents);
             }
 
             if (lastToken.Type == TokenType.LeftParenthesis)
             {
-                lastToken = m_lexer.GetToken(ref contents);
-                ParseExpression(lastToken, ref contents, node);
+                if (!string.IsNullOrWhiteSpace(contents))
+                {
+                    ParseExpression(m_lexer.GetToken(ref contents), ref contents, node.Children == null ? node : node.BackChild());
+                    if (!string.IsNullOrWhiteSpace(contents))
+                    {
+                        lastToken = m_lexer.GetToken(ref contents);
+                        goto begin;
+                    }
+                }
             }
             else if (lastToken.Type != TokenType.RightParenthesis)
             {
-                throw new ParserException("Expression needs to end with ')'");
+                throw new ParserException("Mismatched parenthesis");
             }
         }
 
@@ -85,8 +143,6 @@ namespace Compiler
                 case TokenType.Int:
                 case TokenType.Real:
                 case TokenType.String:
-                    node.Add(lastToken);
-                    break;
                 case TokenType.Identifier:
                     node.Add(lastToken);
                     break;
@@ -104,7 +160,7 @@ namespace Compiler
         /// </summary>
         private void ParseStatement(ASTNode node, ref string contents, Token lastToken)
         {
-            node.Add(lastToken);
+            node.AddToChildren(lastToken);
             switch (lastToken.Value)
             {
                 case "if":
@@ -170,7 +226,7 @@ namespace Compiler
                 throw new ParserException("let statement not in (let (varlist)) form.");
             }
 
-            node.Add(lastToken);
+            node.AddToChildren(lastToken);
 
             // Now attempt to add a type.
 
@@ -180,7 +236,7 @@ namespace Compiler
                 throw new ParserException("let statement not in (let (varlist)) form.");
             }
 
-            node.Add(lastToken);
+            node.AddToChildren(lastToken);
 
             lastToken = m_lexer.PeekToken(ref contents);
             if (lastToken.Type != TokenType.RightParenthesis)
@@ -255,8 +311,11 @@ namespace Compiler
         private void ParseBinaryOperator(ASTNode node, ref string contents)
         {
             var last = m_lexer.GetToken(ref contents);
+            
             ParseOper(node, last, ref contents);
+         
             last = m_lexer.GetToken(ref contents);
+            
             ParseOper(node, last, ref contents);
         }
 
@@ -271,7 +330,7 @@ namespace Compiler
                 throw new ParserException(":= must be followed by an identifier.");
             }
 
-            node.Add(last);
+            node.AddToChildren(last);
 
             last = m_lexer.GetToken(ref contents);
 
@@ -286,18 +345,31 @@ namespace Compiler
             switch (last.Type)
             {
                 case TokenType.LeftParenthesis:
-                    ParseExpression(last, ref contents, node);
+                    last = m_lexer.GetToken(ref contents);
+
+                    node.Children = node.Children ?? new List<ASTNode>();
+                    node.Children.Add(new ASTNode(last));
+
+                    ParseInner(last, ref contents, node.Children.Last());
+                    
+                    last = m_lexer.GetToken(ref contents);
+                    if (last.Type != TokenType.RightParenthesis)
+                    {
+                        throw new ParserException("oper with ( must match with ).");
+                    }
+
                     break;
                 case TokenType.Int:
                 case TokenType.Real:
                 case TokenType.Identifier:
                 case TokenType.String:
-                    node.Add(last);
+                    node.AddToChildren(last);
                     break;
                 default:
                     throw new ParserException("Expression form not matched.");
             }
         }
+
         /// <summary>
         /// Parses a "standard" IBTL expression.
         /// </summary>
@@ -312,7 +384,7 @@ namespace Compiler
                 case TokenType.Real:
                 case TokenType.Identifier:
                 case TokenType.String:
-                    node.Add(lastToken);
+                    node.AddToChildren(lastToken);
                     break;
                 case TokenType.Statement:
                     ParseStatement(node, ref contents, lastToken);
@@ -320,14 +392,6 @@ namespace Compiler
                 default:
                     throw new ParserException("expression form not matched.");
             }
-        }
-
-        /// <summary>
-        /// Reads a file and outputs a string of its contents.
-        /// </summary>
-        private string GetFileContents(string filename)
-        {
-            return string.Join("", File.ReadAllLines(filename).SelectMany(c => c));
         }
     }
 }

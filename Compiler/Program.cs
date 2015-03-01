@@ -10,10 +10,15 @@ namespace Compiler
     {
         static void Main(string[] args)
         {
-            foreach (var file in string.Join(" ", args).Split(' '))
+            Console.WriteLine("Enter IBTL:");
+
+            string ibtl = string.Empty;
+
+            while (!string.IsNullOrWhiteSpace(ibtl = Console.ReadLine()))
             {
-                var ast = new Parser().Parse(file);
-                string gforth = ast.ToGforth();
+                string gforth = new Parser().Parse(ibtl).ToGforth();
+                Console.WriteLine("Equivalent Gforth:\n");
+                Console.WriteLine(gforth);
             }
         }
     }

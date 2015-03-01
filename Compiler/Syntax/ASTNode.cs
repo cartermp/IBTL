@@ -23,6 +23,16 @@ namespace Compiler.Syntax
 
         public void Add(Token token)
         {
+            Token = token;
+        }
+
+        public void AddToChildren(Token token)
+        {
+            if (Children == null)
+            {
+                Children = new List<ASTNode>();
+            }
+
             Children.Add(new ASTNode(token));
         }
 

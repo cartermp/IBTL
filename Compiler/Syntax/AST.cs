@@ -15,21 +15,17 @@ namespace Compiler.Syntax
     {
         private List<ASTNode> mNodes;
 
+        /// <summary>
+        /// Initializes a new AST.
+        /// </summary>
         public AST() : this(new List<ASTNode>()) { }
 
+        /// <summary>
+        /// Initializes a new AST with given AST Nodes.
+        /// </summary>
         public AST(List<ASTNode> nodes)
         {
             mNodes = nodes;
-        }
-
-        public int Size()
-        {
-            return mNodes.Count;
-        }
-
-        public bool Empty()
-        {
-            return !mNodes.Any();
         }
 
         public void Add(ASTNode node)
@@ -37,11 +33,22 @@ namespace Compiler.Syntax
             mNodes.Add(node);
         }
 
+        /// <summary>
+        /// Returns the last child Node in the AST.
+        /// </summary>
+        public ASTNode Back()
+        {
+            return mNodes.Last();
+        }
+
+        /// <summary>
+        /// Converts the AST to Gforth code.
+        /// </summary>
         public string ToGforth()
         {
             // Defining our own integer power function here so that we don't
             // have to incorporate any int->float->int casting fuckery.
-            string gforthIntegerPower = ":^ 1 swap 0 u+do over * loop nip ; ";
+            string gforthIntegerPower = ":^ 1 swap 0 u+do over * loop nip ; \n\n";
 
             Stack<SemanticToken> tokenStack = new Stack<SemanticToken>();
 

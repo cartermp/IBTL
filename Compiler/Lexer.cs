@@ -21,14 +21,8 @@ namespace Compiler
         /// </summary>
         public Token GetToken(ref string input)
         {
-            if (m_peekedToken != null)
-            {
-                Token t = m_peekedToken;
-                m_peekedToken = null;
-                return t;
-            }
-
-            return PeekToken(ref input); ;
+            m_peekedToken = null;
+            return PeekToken(ref input);
         }
 
         /// <summary>
@@ -38,7 +32,7 @@ namespace Compiler
         {
             if (m_peekedToken == null)
             {
-                m_peekedToken = PeekToken(ref input);
+                m_peekedToken = GetTokenImpl(ref input);
             }
 
             return m_peekedToken;
@@ -50,10 +44,15 @@ namespace Compiler
         /// </summary>
         private Token GetTokenImpl(ref string input)
         {
-            input.TrimStart();
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return null;
+            }
+
+            input = input.TrimStart();
 
             char c = GetFirstCharAndTrimOff(ref input);
-
+            
             if (char.IsLetter(c) || c == '_')
             {
                 return LexIdentifier(ref input, c);
@@ -90,7 +89,6 @@ namespace Compiler
                 return LexString(ref input, c);
             }
 
-
             if (!IsParen(c))
             {
                 throw new LexerException("not paren", 1);
@@ -112,7 +110,7 @@ namespace Compiler
         /// <summary>
         /// Preloads the symbol table with some known tokens.
         /// </summary>
-        private void PreloadTable()
+        public void PreloadTable()
         {
             m_table.Add("true", new Token { Type = TokenType.True, Value = "true" });
             m_table.Add("false", new Token { Type = TokenType.False, Value = "false" });
@@ -187,7 +185,7 @@ namespace Compiler
                 numStr += c;
                 c = input.First();
 
-                if (!char.IsNumber(c))
+                if (!char.IsNumber(c) && c != '.')
                 {
                     break;
                 }
@@ -267,7 +265,7 @@ namespace Compiler
 
             Token t;
 
-            if (m_table.TryGetValue(input, out t))
+            if (m_table.TryGetValue(tmp, out t))
             {
                 return t;
             }
@@ -293,7 +291,7 @@ namespace Compiler
         private char GetFirstCharAndTrimOff(ref string input)
         {
             char c = input.First();
-            input.Substring(1, input.Length - 1);
+            input = input.Substring(1, input.Length - 1);
             return c;
         }
     }

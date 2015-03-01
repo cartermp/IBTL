@@ -38,7 +38,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 > CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1 2 > CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -71,7 +71,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 ^ CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1 2 ^ CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -104,7 +104,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1 2 + CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1 2 + CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -137,7 +137,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e 2 s>f f+ CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 2 s>f f+ CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -181,7 +181,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e 1 2 - s>f f+ CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 1 2 - s>f f+ CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -214,7 +214,7 @@ namespace IBTLUnitTests
 
             AST ast = new AST(nodes);
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "s\" smoke weed errday\" s\" swagswagswag\" s+ CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "s\" smoke weed errday\" s\" swagswagswag\" s+ CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -241,7 +241,7 @@ namespace IBTLUnitTests
                 }
             };
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fsin CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e fsin CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -275,7 +275,7 @@ namespace IBTLUnitTests
                 }
             };
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fcos fsin CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e fcos fsin CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -324,7 +324,7 @@ namespace IBTLUnitTests
                 }
             };
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; " + "1.0e fcos 1 2 + s>f f- CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e fcos 1 2 + s>f f- CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.IsTrue(expected == actual);
