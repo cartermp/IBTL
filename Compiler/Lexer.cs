@@ -30,11 +30,7 @@ namespace Compiler
         /// </summary>
         public Token PeekToken(ref string input)
         {
-            if (m_peekedToken == null)
-            {
-                m_peekedToken = GetTokenImpl(ref input);
-            }
-
+            m_peekedToken = GetTokenImpl(ref input);
             return m_peekedToken;
         }
 
@@ -52,7 +48,7 @@ namespace Compiler
             input = input.TrimStart();
 
             char c = GetFirstCharAndTrimOff(ref input);
-            
+
             if (char.IsLetter(c) || c == '_')
             {
                 return LexIdentifier(ref input, c);

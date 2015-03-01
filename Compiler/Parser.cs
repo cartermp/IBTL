@@ -24,58 +24,9 @@ namespace Compiler
             {
                 ast.Add(new ASTNode());
                 ParseExpression(lastToken, ref expression, ast.Back());
-                //S(lastToken, ref expression, ast.Back());
             }
 
             return ast;
-        }
-
-        private void S(Token lastToken, ref string contents, ASTNode node)
-        {
-            if (lastToken.Type == TokenType.LeftParenthesis)
-            {
-                SDoublePrime(m_lexer.GetToken(ref contents), ref contents, node);
-            }
-
-            if (lastToken.Type == TokenType.RightParenthesis)
-            {
-                return;
-            }
-            else
-            {
-                ParseInner(lastToken, ref contents, node);
-                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
-            }
-        }
-
-        private void SPrime(Token lastToken, ref string contents, ASTNode node)
-        {
-            if (lastToken == null || string.IsNullOrWhiteSpace(contents))
-            {
-                return;
-            }
-
-            S(lastToken, ref contents, node);
-            SPrime(m_lexer.GetToken(ref contents), ref contents, node);
-        }
-
-        private void SDoublePrime(Token lastToken, ref string contents, ASTNode node)
-        {
-            if (lastToken.Type == TokenType.RightParenthesis)
-            {
-                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
-            }
-            else
-            {
-                S(lastToken, ref contents, node);
-                lastToken = m_lexer.GetToken(ref contents);
-                if (lastToken.Type != TokenType.RightParenthesis)
-                {
-                    throw new ParserException("Expected right parenthesis");
-
-                }
-                SPrime(m_lexer.GetToken(ref contents), ref contents, node);
-            }
         }
 
         /// <summary>
@@ -97,13 +48,13 @@ namespace Compiler
                 }
             }
 
-            while (lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
+            while (lastToken != null && lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
             {
                 ParseInner(lastToken, ref contents, node);
                 lastToken = m_lexer.GetToken(ref contents);
             }
 
-            if (lastToken.Type == TokenType.LeftParenthesis)
+            if (lastToken != null && lastToken.Type == TokenType.LeftParenthesis)
             {
                 if (!string.IsNullOrWhiteSpace(contents))
                 {
@@ -115,7 +66,7 @@ namespace Compiler
                     }
                 }
             }
-            else if (lastToken.Type != TokenType.RightParenthesis)
+            else if (lastToken != null && lastToken.Type != TokenType.RightParenthesis)
             {
                 throw new ParserException("Mismatched parenthesis");
             }
@@ -144,6 +95,8 @@ namespace Compiler
                 case TokenType.Real:
                 case TokenType.String:
                 case TokenType.Identifier:
+                case TokenType.True:
+                case TokenType.False:
                     node.Add(lastToken);
                     break;
                 case TokenType.Statement:
@@ -160,7 +113,6 @@ namespace Compiler
         /// </summary>
         private void ParseStatement(ASTNode node, ref string contents, Token lastToken)
         {
-            node.AddToChildren(lastToken);
             switch (lastToken.Value)
             {
                 case "if":
@@ -283,7 +235,6 @@ namespace Compiler
             lastToken = m_lexer.PeekToken(ref contents);
             if (lastToken != null && lastToken.Type != TokenType.RightParenthesis)
             {
-                lastToken = m_lexer.GetToken(ref contents);
                 ParseStandardExpression(node, lastToken, ref contents);
 
                 lastToken = m_lexer.PeekToken(ref contents);
@@ -311,11 +262,11 @@ namespace Compiler
         private void ParseBinaryOperator(ASTNode node, ref string contents)
         {
             var last = m_lexer.GetToken(ref contents);
-            
+
             ParseOper(node, last, ref contents);
-         
+
             last = m_lexer.GetToken(ref contents);
-            
+
             ParseOper(node, last, ref contents);
         }
 
@@ -351,7 +302,7 @@ namespace Compiler
                     node.Children.Add(new ASTNode(last));
 
                     ParseInner(last, ref contents, node.Children.Last());
-                    
+
                     last = m_lexer.GetToken(ref contents);
                     if (last.Type != TokenType.RightParenthesis)
                     {
@@ -363,6 +314,8 @@ namespace Compiler
                 case TokenType.Real:
                 case TokenType.Identifier:
                 case TokenType.String:
+                case TokenType.True:
+                case TokenType.False:
                     node.AddToChildren(last);
                     break;
                 default:
@@ -395,6 +348,8 @@ namespace Compiler
                 case TokenType.Real:
                 case TokenType.Identifier:
                 case TokenType.String:
+                case TokenType.True:
+                case TokenType.False:
                     node.AddToChildren(lastToken);
                     break;
                 case TokenType.Statement:

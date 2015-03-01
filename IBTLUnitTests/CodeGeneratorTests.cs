@@ -331,15 +331,6 @@ namespace IBTLUnitTests
         }
 
         /// <summary>
-        /// (and true false) => 
-        /// </summary>
-        [TestMethod]
-        public void AndTest()
-        {
-
-        }
-
-        /// <summary>
         /// (if (> 5 3) 7 2) => "5 3 > if 7 else 2 endif"
         /// </summary>
         [TestMethod]
