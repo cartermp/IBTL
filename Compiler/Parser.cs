@@ -378,7 +378,18 @@ namespace Compiler
             switch (lastToken.Type)
             {
                 case TokenType.LeftParenthesis:
-                    ParseExpression(lastToken, ref contents, node);
+                    lastToken = m_lexer.GetToken(ref contents);
+
+                    node.Children = node.Children ?? new List<ASTNode>();
+                    node.Children.Add(new ASTNode(lastToken));
+
+                    ParseInner(lastToken, ref contents, node.Children.Last());
+
+                    lastToken = m_lexer.GetToken(ref contents);
+                    if (lastToken.Type != TokenType.RightParenthesis)
+                    {
+                        throw new ParserException("expr with ( must match with ).");
+                    }
                     break;
                 case TokenType.Int:
                 case TokenType.Real:

@@ -23,6 +23,7 @@ namespace Compiler.Syntax
         String,
         True,
         False,
+        Boolean,
 
         Statement,
         Type,

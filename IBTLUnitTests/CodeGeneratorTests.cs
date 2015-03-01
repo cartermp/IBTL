@@ -329,5 +329,60 @@ namespace IBTLUnitTests
 
             Assert.IsTrue(expected == actual);
         }
+
+        /// <summary>
+        /// (and true false) => 
+        /// </summary>
+        [TestMethod]
+        public void AndTest()
+        {
+
+        }
+
+        /// <summary>
+        /// (if (> 5 3) 7 2) => "5 3 > if 7 else 2 endif"
+        /// </summary>
+        [TestMethod]
+        public void IfStatementTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "if", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3", Type = TokenType.Int }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "7", Type = TokenType.Int }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3 > if 7 else 2 endif CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

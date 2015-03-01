@@ -91,7 +91,41 @@ namespace Compiler.Syntax
                 case TokenType.UnaryOperator:
                     HandleUnaryOperator(ref tokenStack, parentToken);
                     break;
+                case TokenType.Statement:
+                    HandleStatement(ref tokenStack, parentToken);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Delegates work to different Statement types.
+        /// </summary>
+        private void HandleStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            switch (parentToken.Value)
+            {
+                case "if":
+                    HandleIfStatement(ref tokenStack, parentToken);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Handles generating GForth code for an (if expr expr)|(if expr expr expr) subtree.
+        /// </summary>
+        private void HandleIfStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            SemanticToken expr2 = tokenStack.Count == 3 ? tokenStack.Pop() : null;
+
+            var expr1 = tokenStack.Pop();
+            var predicate = tokenStack.Pop();
+
+            string expression = predicate.Value + " if " + expr1.Value + (expr2 != null ? " else " + expr2.Value : string.Empty) + " endif";
+            tokenStack.Push(new SemanticToken
+            {
+                Type = TokenType.Statement,
+                Value = expression
+            });
         }
 
         /// <summary>
@@ -113,7 +147,7 @@ namespace Compiler.Syntax
 
                 tokenStack.Push(new SemanticToken
                 {
-                    Type = TokenType.Real,
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
                     Value = subExpression
                 });
             }
@@ -122,7 +156,7 @@ namespace Compiler.Syntax
                 string subExpression = operand.Value + " " + parentToken.Value;
                 tokenStack.Push(new SemanticToken
                 {
-                    Type = TokenType.Real,
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
                     Value = subExpression
                 });
             }
@@ -145,7 +179,7 @@ namespace Compiler.Syntax
 
                 tokenStack.Push(new SemanticToken
                 {
-                    Type = TokenType.Real,
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
                     Value = subExpression
                 });
             }
@@ -155,7 +189,7 @@ namespace Compiler.Syntax
 
                 tokenStack.Push(new SemanticToken
                 {
-                    Type = TokenType.Int,
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
                     Value = subExpression
                 });
             }
@@ -208,6 +242,17 @@ namespace Compiler.Syntax
         {
             string val = token.Value;
             return val == "sin" || val == "cos" || val == "tan";
+        }
+
+        // <summary>
+        /// Determines if the given token represents a predicate expression.
+        /// </summary>
+        private bool IsAPredicate(Token token)
+        {
+            string val = token.Value;
+            return val == "not" || val == "and" || val == "or" ||
+                   val == ">" || val == "<" || val == "==" ||
+                   val == "!=" || val == ">=" || val == "<=";
         }
     }
 }
