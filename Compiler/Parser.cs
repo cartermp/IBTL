@@ -113,7 +113,7 @@ namespace Compiler
         /// </summary>
         private void ParseStatement(ASTNode node, ref string contents, Token lastToken)
         {
-            switch (lastToken.Value)
+            switch (lastToken.Value.ToLower())
             {
                 case "if":
                     ParseIfStatement(node, ref contents);

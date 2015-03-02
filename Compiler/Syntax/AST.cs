@@ -102,7 +102,7 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
         {
-            switch (parentToken.Value)
+            switch (parentToken.Value.ToLower())
             {
                 case "if":
                     HandleIfStatement(ref tokenStack, parentToken);
@@ -259,7 +259,7 @@ namespace Compiler.Syntax
         private string ConvertNumberToGforthReal(SemanticToken token)
         {
             return token.Type == TokenType.Int ? token.Value + " s>f"
-                : !token.Value.Contains("e") ? token.Value + "e" : token.Value;
+                : !token.Value.ToLower().Contains("e") ? token.Value + "e" : token.Value;
         }
 
         /// <summary>
@@ -275,7 +275,7 @@ namespace Compiler.Syntax
         /// </summary>
         private bool IsATrigOperand(Token token)
         {
-            string val = token.Value;
+            string val = token.Value.ToLower();
             return val == "sin" || val == "cos" || val == "tan";
         }
 
@@ -284,7 +284,7 @@ namespace Compiler.Syntax
         /// </summary>
         private bool IsAPredicate(Token token)
         {
-            string val = token.Value;
+            string val = token.Value.ToLower();
             return val == "not" || val == "and" || val == "or" ||
                    val == ">" || val == "<" || val == "==" ||
                    val == "!=" || val == ">=" || val == "<=";
