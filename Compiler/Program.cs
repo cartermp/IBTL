@@ -14,11 +14,21 @@ namespace Compiler
 
             string ibtl = string.Empty;
 
+            Console.Write("=> ");
             while (!string.IsNullOrWhiteSpace(ibtl = Console.ReadLine()))
             {
-                string gforth = new Parser().Parse(ibtl).ToGforth();
-                Console.WriteLine("Equivalent Gforth:\n");
-                Console.WriteLine(gforth);
+                try
+                {
+                    string gforth = new Parser().Parse(ibtl).ToGforth();
+                    Console.WriteLine("Equivalent Gforth:\n");
+                    Console.WriteLine(gforth);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                Console.Write("=> ");
             }
         }
     }
