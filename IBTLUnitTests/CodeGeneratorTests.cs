@@ -202,11 +202,11 @@ namespace IBTLUnitTests
                     {
                         new ASTNode
                         {
-                            Token = new Token{ Value = "smoke weed errday", Type = TokenType.String }
+                            Token = new Token{ Value = "\"smoke weed errday\"\"", Type = TokenType.String }
                         },
                         new ASTNode
                         {
-                            Token = new Token{ Value = "swagswagswag", Type = TokenType.String }
+                            Token = new Token{ Value = "\"swagswagswag\"\"", Type = TokenType.String }
                         }
                     }
                 }
@@ -482,6 +482,71 @@ namespace IBTLUnitTests
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3.0 > if 7 else 2 endif CR";
             string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void StdoutTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Type = TokenType.Statement, Value = "stdout" },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "\"hello\"\"", Type = TokenType.String }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "\"world\"\"", Type = TokenType.String }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "s\" hello\" s\" world\" s+ type CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void RealsPowerTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "^", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 2 s>f f** CR";
+            string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
         }

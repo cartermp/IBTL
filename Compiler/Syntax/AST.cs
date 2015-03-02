@@ -107,7 +107,23 @@ namespace Compiler.Syntax
                 case "if":
                     HandleIfStatement(ref tokenStack, parentToken);
                     break;
+                case "stdout":
+                    HandleStdoutStatement(ref tokenStack, parentToken);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Handles generating gforth code for an (stdout (expr)) subtree.
+        /// </summary>
+        private void HandleStdoutStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            var expression = tokenStack.Pop().Value + " type";
+            tokenStack.Push(new SemanticToken
+            {
+                Type = TokenType.Statement,
+                Value = expression
+            });
         }
 
         /// <summary>
@@ -180,6 +196,11 @@ namespace Compiler.Syntax
                 string left = ConvertNumberToGforthReal(lhs);
                 string right = ConvertNumberToGforthReal(rhs);
 
+                if (parentToken.Value == "^")
+                {
+                    parentToken.Value = "**";
+                }
+
                 string subExpression = left + " " + right + " " + "f" + parentToken.Value;
 
                 tokenStack.Push(new SemanticToken
@@ -246,7 +267,7 @@ namespace Compiler.Syntax
         /// </summary>
         private string ConvertStringToGforthString(SemanticToken token)
         {
-            return "s\" " + token.Value + "\"";
+            return string.Format("s\" {0}\"", token.Value.Substring(1, token.Value.Length - 3));
         }
 
         /// <summary>
