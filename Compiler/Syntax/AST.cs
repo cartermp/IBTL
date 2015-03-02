@@ -120,6 +120,11 @@ namespace Compiler.Syntax
             var expr1 = tokenStack.Pop();
             var predicate = tokenStack.Pop();
 
+            if (predicate.Type != TokenType.Boolean)
+            {
+                throw new SemanticException(predicate + " does not evaluate to true or false.");
+            }
+
             string expression = predicate.Value + " if " + expr1.Value + (expr2 != null ? " else " + expr2.Value : string.Empty) + " endif";
             tokenStack.Push(new SemanticToken
             {
@@ -214,6 +219,15 @@ namespace Compiler.Syntax
                 {
                     Type = TokenType.String,
                     Value = subExpression
+                });
+            }
+            else if (IsAPredicate(parentToken))
+            {
+                string expression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = TokenType.Boolean,
+                    Value = expression
                 });
             }
         }

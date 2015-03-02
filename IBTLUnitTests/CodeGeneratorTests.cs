@@ -331,6 +331,68 @@ namespace IBTLUnitTests
         }
 
         /// <summary>
+        /// (or true false) => "true false or".
+        /// </summary>
+        [TestMethod]
+        public void BasicOrTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "or", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "true", Type = TokenType.True }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "false", Type = TokenType.False }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "true false or CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (and true true) => "true true and".
+        /// </summary>
+        [TestMethod]
+        public void BasicAndTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "and", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "true", Type = TokenType.True }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "true", Type = TokenType.False }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "true true and CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
         /// (if (> 5 3) 7 2) => "5 3 > if 7 else 2 endif"
         /// </summary>
         [TestMethod]
@@ -371,6 +433,54 @@ namespace IBTLUnitTests
             };
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3 > if 7 else 2 endif CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (if (> 5 3) 7 2) => "5 3.0 > if 7 else 2 endif"
+        /// </summary>
+        [TestMethod]
+        public void IfWithRealsTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "if", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3.0", Type = TokenType.Int }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "7", Type = TokenType.Int }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            // According to gforth, this comparison works.
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3.0 > if 7 else 2 endif CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.AreEqual(expected, actual);
