@@ -486,6 +486,9 @@ namespace IBTLUnitTests
             Assert.AreEqual(expected, actual);
         }
 
+        /// <summary>
+        /// (stdout ("hello" "world")) => "s" hello" s" world" s+ type".
+        /// </summary>
         [TestMethod]
         public void StdoutTest()
         {
@@ -521,6 +524,9 @@ namespace IBTLUnitTests
             Assert.AreEqual(expected, actual);
         }
 
+        /// <summary>
+        /// (^ 1.0 2) => "1.0e 2 s>f f**".
+        /// </summary>
         [TestMethod]
         public void RealsPowerTest()
         {
@@ -546,6 +552,72 @@ namespace IBTLUnitTests
             AST ast = new AST(nodes);
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 2 s>f f** CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (% 1 2) => "1 2 mod".
+        /// </summary>
+        [TestMethod]
+        public void ModIntTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "%", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1", Type = TokenType.Int }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1 2 mod CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (% 1.0 2) => "1.0e 2 s>f fmod".
+        /// </summary>
+        [TestMethod]
+        public void ModRealTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "%", Type = TokenType.BinaryOperator },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 2 s>f fmod CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);

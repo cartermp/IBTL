@@ -191,6 +191,11 @@ namespace Compiler.Syntax
             var rhs = tokenStack.Pop();
             var lhs = tokenStack.Pop();
 
+            if (parentToken.Value == "%")
+            {
+                parentToken.Value = "mod";
+            }
+
             if (lhs.Type == TokenType.Real || rhs.Type == TokenType.Real)
             {
                 string left = ConvertNumberToGforthReal(lhs);
