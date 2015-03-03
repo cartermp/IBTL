@@ -342,6 +342,10 @@ namespace Compiler
                 case TokenType.False:
                     node.AddToChildren(last);
                     break;
+                case TokenType.Minus:
+                    node.AddToChildren(last);
+                    ParseMinus(node.Children.Last(), ref contents);
+                    break;
                 default:
                     throw new ParserException("Expression form not matched.");
             }
