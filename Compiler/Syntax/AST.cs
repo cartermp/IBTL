@@ -158,7 +158,7 @@ namespace Compiler.Syntax
 
             if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real)
             {
-                throw new SemanticException("Trig operators only work on reals.");
+                operand.Value = ConvertNumberToGforthReal(operand);
             }
 
             if (operand.Type == TokenType.Real)
