@@ -180,7 +180,7 @@ namespace Compiler
                 }
 
                 numStr += c;
-                c = input.First();
+                c = input.FirstOrDefault();
 
                 if (!char.IsNumber(c) && c != '.')
                 {

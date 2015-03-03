@@ -59,7 +59,7 @@ namespace Compiler.Syntax
 
             mNodes.ForEach(node => Walk(node, ref tokenStack));
 
-            return gforthIntegerPower + tokenStack.Pop().Value + " CR";
+            return gforthIntegerPower + string.Join(" CR\n", tokenStack.Reverse().Select(s => s.Value)) + " CR";
         }
 
         /// <summary>

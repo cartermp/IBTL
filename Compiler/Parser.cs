@@ -18,12 +18,10 @@ namespace Compiler
 
             m_lexer.PreloadTable();
 
-            var lastToken = m_lexer.GetToken(ref expression);
-
             while (!string.IsNullOrWhiteSpace(expression))
             {
                 ast.Add(new ASTNode());
-                ParseExpression(lastToken, ref expression, ast.Back());
+                ParseExpression(ref expression, ast.Back());
             }
 
             return ast;
@@ -32,38 +30,40 @@ namespace Compiler
         /// <summary>
         /// Recursively parses IBTL token-by-token.
         /// </summary>
-        private void ParseExpression(Token lastToken, ref string contents, ASTNode node)
+        private void ParseExpression(ref string contents, ASTNode node)
         {
-        begin:
+            var lastToken = m_lexer.GetToken(ref contents);
+
             if (lastToken.Type == TokenType.LeftParenthesis)
             {
                 if (!string.IsNullOrWhiteSpace(contents))
                 {
-                    ParseExpression(m_lexer.GetToken(ref contents), ref contents, node.Children == null ? node : node.BackChild());
-                    if (!string.IsNullOrWhiteSpace(contents))
-                    {
-                        lastToken = m_lexer.GetToken(ref contents);
-                        goto begin;
-                    }
+                    ParseExpression(ref contents, node.Children == null ? node : node.BackChild());
+                    lastToken = m_lexer.GetToken(ref contents);
                 }
             }
-
-            while (lastToken != null && lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
+            else if (lastToken != null && lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
             {
                 ParseInner(lastToken, ref contents, node);
-                lastToken = m_lexer.GetToken(ref contents);
+                return;
+            }
+            else
+            {
+                throw new ParserException("Expression cannot start with ).");
             }
 
-            if (lastToken != null && lastToken.Type == TokenType.LeftParenthesis)
+            // hack hack hack hack hack hack hack hack hack hack hack
+            if (lastToken == null)
+            {
+                return;
+            }
+
+            if (lastToken.Type == TokenType.LeftParenthesis)
             {
                 if (!string.IsNullOrWhiteSpace(contents))
                 {
-                    ParseExpression(m_lexer.GetToken(ref contents), ref contents, node.Children == null ? node : node.BackChild());
-                    if (!string.IsNullOrWhiteSpace(contents))
-                    {
-                        lastToken = m_lexer.GetToken(ref contents);
-                        goto begin;
-                    }
+                    ParseExpression(ref contents, node.Children == null ? node : node.BackChild());
+                    return;
                 }
             }
             else if (lastToken != null && lastToken.Type != TokenType.RightParenthesis)
@@ -121,7 +121,7 @@ namespace Compiler
             ParseOper(node, last, ref contents);
 
             var peek = m_lexer.PeekToken(ref contents);
-            if (peek.Type != TokenType.RightParenthesis)
+            if (peek != null && peek.Type != TokenType.RightParenthesis)
             {
                 ParseOper(node, peek, ref contents);
                 node.Token.Type = TokenType.BinaryOperator;
@@ -321,20 +321,13 @@ namespace Compiler
             {
                 case TokenType.LeftParenthesis:
                     last = m_lexer.GetToken(ref contents);
-
-                    bool minusFuckthisIsHacky = false;
-
-                    if (last.Value == "-")
-                    {
-                        minusFuckthisIsHacky = true;
-                    }
-
+                    
                     node.Children = node.Children ?? new List<ASTNode>();
                     node.Children.Add(new ASTNode(last));
 
                     ParseInner(last, ref contents, node.Children.Last());
 
-                    last = minusFuckthisIsHacky ? m_lexer.m_peekedToken : m_lexer.GetToken(ref contents);
+                    last = m_lexer.GetToken(ref contents);
                     if (last.Type != TokenType.RightParenthesis)
                     {
                         throw new ParserException("oper with ( must match with ).");
