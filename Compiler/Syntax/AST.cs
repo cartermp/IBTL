@@ -46,6 +46,11 @@ namespace Compiler.Syntax
         /// </summary>
         public string ToGforth()
         {
+            if (mNodes == null || !mNodes.Any() || mNodes.First() == null || mNodes.First().Token == null)
+            {
+                return string.Empty;
+            }
+
             // Defining our own integer power function here so that we don't
             // have to incorporate any int->float->int casting fuckery.
             string gforthIntegerPower = ":^ 1 swap 0 u+do over * loop nip ; \n\n";
