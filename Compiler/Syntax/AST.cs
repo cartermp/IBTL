@@ -226,29 +226,20 @@ namespace Compiler.Syntax
             }
             else if (lhs.Type == TokenType.String || rhs.Type == TokenType.String)
             {
-                if (parentToken.Value != "+")
-                {
-                    throw new SemanticException("Strings can only be concatenated.  " + parentToken.Value + " is not a valid operator for strings.");
-                }
-
-                if (lhs.Type != TokenType.String || rhs.Type != TokenType.String)
-                {
-                    throw new SemanticException("Strings cannot be concatenated by non-strings.");
-                }
-
-                string left = ConvertStringToGforthString(lhs);
-                string right = ConvertStringToGforthString(rhs);
-
-                string subExpression = left + " " + right + " " + "s" + parentToken.Value;
-
-                tokenStack.Push(new SemanticToken
-                {
-                    Type = TokenType.String,
-                    Value = subExpression
-                });
+                HandleStringConcatenation(tokenStack, parentToken, rhs, lhs);
             }
             else if (IsAPredicate(parentToken))
             {
+                if (lhs.Type == TokenType.Real)
+                {
+                    lhs.Value = ConvertNumberToGforthReal(lhs);
+                }
+
+                if (rhs.Type == TokenType.Real)
+                {
+                    rhs.Value = ConvertNumberToGforthReal(rhs);
+                }
+
                 string expression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
                 tokenStack.Push(new SemanticToken
                 {
@@ -256,6 +247,33 @@ namespace Compiler.Syntax
                     Value = expression
                 });
             }
+        }
+
+        /// <summary>
+        /// Generates GForth String Concatenation code.
+        /// </summary>
+        private void HandleStringConcatenation(Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken rhs, SemanticToken lhs)
+        {
+            if (parentToken.Value != "+")
+            {
+                throw new SemanticException("Strings can only be concatenated.  " + parentToken.Value + " is not a valid operator for strings.");
+            }
+
+            if (lhs.Type != TokenType.String || rhs.Type != TokenType.String)
+            {
+                throw new SemanticException("Strings cannot be concatenated by non-strings.");
+            }
+
+            string left = ConvertStringToGforthString(lhs);
+            string right = ConvertStringToGforthString(rhs);
+
+            string subExpression = left + " " + right + " " + "s" + parentToken.Value;
+
+            tokenStack.Push(new SemanticToken
+            {
+                Type = TokenType.String,
+                Value = subExpression
+            });
         }
 
         /// <summary>
