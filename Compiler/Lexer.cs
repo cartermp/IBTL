@@ -12,7 +12,8 @@ namespace Compiler
     {
         private Dictionary<string, Token> m_table = new Dictionary<string, Token>();
 
-        private Token m_peekedToken;
+        // fuck it
+        public Token m_peekedToken;
 
         private char m_prevChar;
 
@@ -59,9 +60,9 @@ namespace Compiler
                 return LexNumber(ref input, c);
             }
 
-            if (c == '-' && m_prevChar == '(')
+            if (c == '-')
             {
-                return new Token { Type = TokenType.UnaryOperator, Value = "-" };
+                return new Token { Type = TokenType.Minus, Value = "-" };
             }
 
             if (IsBinop(c))

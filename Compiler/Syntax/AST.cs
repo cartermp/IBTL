@@ -156,6 +156,11 @@ namespace Compiler.Syntax
         {
             var operand = tokenStack.Pop();
 
+            if (parentToken.Value == "-")
+            {
+                parentToken.Value = "negate";
+            }
+
             if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real)
             {
                 operand.Value = ConvertNumberToGforthReal(operand);

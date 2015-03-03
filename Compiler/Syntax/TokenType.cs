@@ -11,6 +11,9 @@ namespace Compiler.Syntax
     /// </summary>
     public enum TokenType
     {
+        // Temporary type to handle turning into unary or binary at parse time.
+        Minus,
+
         LeftParenthesis,
         RightParenthesis,
         

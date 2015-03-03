@@ -103,8 +103,32 @@ namespace Compiler
                     node.Add(lastToken);
                     ParseStatement(node, ref contents, lastToken);
                     break;
+                case TokenType.Minus:
+                    node.Add(lastToken);
+                    ParseMinus(node, ref contents);
+                    break;
                 default:
                     throw new ParserException("Unrecognized token.");
+            }
+        }
+
+        /// <summary>
+        /// Parses a minus operator as either a binary or unary operator, depending on context.
+        /// </summary>
+        private void ParseMinus(ASTNode node, ref string contents)
+        {
+            var last = m_lexer.GetToken(ref contents);
+            ParseOper(node, last, ref contents);
+
+            var peek = m_lexer.PeekToken(ref contents);
+            if (peek.Type != TokenType.RightParenthesis)
+            {
+                ParseOper(node, peek, ref contents);
+                node.Token.Type = TokenType.BinaryOperator;
+            }
+            else
+            {
+                node.Token.Type = TokenType.UnaryOperator;
             }
         }
 
@@ -298,12 +322,19 @@ namespace Compiler
                 case TokenType.LeftParenthesis:
                     last = m_lexer.GetToken(ref contents);
 
+                    bool minusFuckthisIsHacky = false;
+
+                    if (last.Value == "-")
+                    {
+                        minusFuckthisIsHacky = true;
+                    }
+
                     node.Children = node.Children ?? new List<ASTNode>();
                     node.Children.Add(new ASTNode(last));
 
                     ParseInner(last, ref contents, node.Children.Last());
 
-                    last = m_lexer.GetToken(ref contents);
+                    last = minusFuckthisIsHacky ? m_lexer.m_peekedToken : m_lexer.GetToken(ref contents);
                     if (last.Type != TokenType.RightParenthesis)
                     {
                         throw new ParserException("oper with ( must match with ).");
