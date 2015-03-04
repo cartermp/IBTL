@@ -63,7 +63,8 @@ namespace Compiler.Syntax
         }
 
         /// <summary>
-        /// Performs a Postorder walk of the AST, generating Gforth code.
+        /// Performs a Postorder walk of the AST, generating Gforth code.  Does so by flattening
+        /// each subtree with a stack.
         /// </summary>
         private void Walk(ASTNode node, ref Stack<SemanticToken> tokenStack)
         {
@@ -87,7 +88,6 @@ namespace Compiler.Syntax
             }
 
             var parentToken = node.Token;
-
             switch (parentToken.Type)
             {
                 case TokenType.BinaryOperator:

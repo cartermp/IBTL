@@ -5,6 +5,15 @@ using System.Linq;
 
 namespace Compiler
 {
+    /// <summary>
+    /// Represents the parsing stage of the IBTL compiler.
+    /// 
+    /// Fundamentally, this is a recursive-descent LL(1) parser.
+    /// 
+    /// Realistically, this is some recursive code that I threw together
+    /// in a few days because I didn't want to follow the asinine grammar
+    /// we were given.
+    /// </summary>
     public class Parser
     {
         private Lexer m_lexer = new Lexer();
