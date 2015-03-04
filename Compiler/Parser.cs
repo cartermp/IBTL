@@ -261,8 +261,8 @@ namespace Compiler
 
             do
             {
-                lastToken = m_lexer.GetToken(ref contents);
                 ParseStandardExpression(node, lastToken, ref contents);
+                lastToken = m_lexer.GetToken(ref contents);
             } while (lastToken.Type != TokenType.RightParenthesis);
         }
 
