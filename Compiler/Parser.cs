@@ -115,10 +115,19 @@ namespace Compiler
         /// <summary>
         /// Parses a minus operator as either a binary or unary operator, depending on context.
         /// </summary>
-        private void ParseMinus(ASTNode node, ref string contents)
+        private void ParseMinus(ASTNode node, ref string contents, Token parentToken = null)
         {
             var last = m_lexer.GetToken(ref contents);
             ParseOper(node, last, ref contents);
+
+            // If there's a parent token and it's an operator (or unkown operator in the case of another Minus),
+            // We treat the current Minus token as unary.  Treating it as Binary would interfere with a parent's
+            // potential operands.
+            if (parentToken != null && (parentToken.Type == TokenType.BinaryOperator || parentToken.Type == TokenType.UnaryOperator || parentToken.Type == TokenType.Minus))
+            {
+                node.Token.Type = TokenType.UnaryOperator;
+                return;
+            }
 
             var peek = m_lexer.PeekToken(ref contents);
             if (peek != null && peek.Type != TokenType.RightParenthesis)
@@ -344,7 +353,7 @@ namespace Compiler
                     break;
                 case TokenType.Minus:
                     node.AddToChildren(last);
-                    ParseMinus(node.Children.Last(), ref contents);
+                    ParseMinus(node.Children.Last(), ref contents, node.Token);
                     break;
                 default:
                     throw new ParserException("Expression form not matched.");
