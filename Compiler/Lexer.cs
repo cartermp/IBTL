@@ -11,11 +11,7 @@ namespace Compiler
     public class Lexer
     {
         private Dictionary<string, Token> m_table = new Dictionary<string, Token>();
-
-        // fuck it
-        public Token m_peekedToken;
-
-        private char m_prevChar;
+        private Token m_peekedToken;
 
         /// <summary>
         /// Gets an IBTL token.  Uses the peeked token if available; otherwise, extracts from the input string.
@@ -89,12 +85,6 @@ namespace Compiler
             if (!IsParen(c))
             {
                 throw new LexerException("not paren", 1);
-            }
-
-            // We set this so that we can distinguish between unary and binary minus.
-            if (c == '(')
-            {
-                m_prevChar = '(';
             }
 
             return new Token

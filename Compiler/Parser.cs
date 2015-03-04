@@ -123,13 +123,16 @@ namespace Compiler
             // If there's a parent token and it's an operator (or unkown operator in the case of another Minus),
             // We treat the current Minus token as unary.  Treating it as Binary would interfere with a parent's
             // potential operands.
-            if (parentToken != null && (parentToken.Type == TokenType.BinaryOperator || parentToken.Type == TokenType.UnaryOperator || parentToken.Type == TokenType.Minus))
+            //
+            // Or a statement, apparently.
+            if (parentToken != null && (parentToken.Type == TokenType.BinaryOperator || parentToken.Type == TokenType.UnaryOperator || 
+                                        parentToken.Type == TokenType.Minus || parentToken.Type == TokenType.Statement))
             {
                 node.Token.Type = TokenType.UnaryOperator;
                 return;
             }
 
-            var peek = m_lexer.PeekToken(ref contents);
+            var peek = m_lexer.GetToken(ref contents);
             if (peek != null && peek.Type != TokenType.RightParenthesis)
             {
                 ParseOper(node, peek, ref contents);
@@ -223,7 +226,7 @@ namespace Compiler
 
             node.AddToChildren(lastToken);
 
-            lastToken = m_lexer.PeekToken(ref contents);
+            lastToken = m_lexer.GetToken(ref contents);
             if (lastToken.Type != TokenType.RightParenthesis)
             {
                 throw new ParserException("let statement not in (let (varlist)) form.");
@@ -265,12 +268,12 @@ namespace Compiler
             lastToken = m_lexer.GetToken(ref contents);
             ParseStandardExpression(node, lastToken, ref contents);
 
-            lastToken = m_lexer.PeekToken(ref contents);
+            lastToken = m_lexer.GetToken(ref contents);
             if (lastToken != null && lastToken.Type != TokenType.RightParenthesis)
             {
                 ParseStandardExpression(node, lastToken, ref contents);
 
-                lastToken = m_lexer.PeekToken(ref contents);
+                lastToken = m_lexer.GetToken(ref contents);
                 if (lastToken.Type != TokenType.RightParenthesis)
                 {
                     throw new ParserException("If statement not in (if expr expr expr) or (if expr expr) form.");
@@ -391,6 +394,10 @@ namespace Compiler
                     break;
                 case TokenType.Statement:
                     ParseStatement(node, ref contents, lastToken);
+                    break;
+                case TokenType.Minus:
+                    node.AddToChildren(lastToken);
+                    ParseMinus(node.BackChild(), ref contents, node.Token);
                     break;
                 default:
                     throw new ParserException("expression form not matched.");
