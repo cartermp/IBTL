@@ -56,10 +56,6 @@ namespace Compiler
                 ParseInner(lastToken, ref contents, node);
                 return;
             }
-            else
-            {
-                throw new ParserException("Expression cannot start with ).");
-            }
 
             // hack hack hack hack hack hack hack hack hack hack hack
             if (lastToken == null)
@@ -191,33 +187,47 @@ namespace Compiler
         /// </summary>
         private void ParseLetStatement(ASTNode node, ref string contents)
         {
-            var lastToken = m_lexer.GetToken(ref contents);
-
-            if (lastToken.Type == TokenType.RightParenthesis)
-            {
-                throw new ParserException("(let (varlist)) form not matched.");
-            }
-
+            Token lastToken = null;
             do
             {
                 lastToken = m_lexer.GetToken(ref contents);
-                ParseVar(node, lastToken, ref contents);
-            } while (lastToken.Type != TokenType.RightParenthesis);
+                if (lastToken == null)
+                {
+                    throw new ParserException("mismatched parenthesis.");
+                }
+
+                if (lastToken.Type == TokenType.RightParenthesis)
+                {
+                    break;
+                }
+
+                if (lastToken.Type == TokenType.LeftParenthesis)
+                {
+                    ParseVar(node, lastToken, ref contents);
+                }
+                else
+                {
+                    throw new ParserException("varlist in let statement did not being with lparen.");
+                }
+            } while (lastToken != null && lastToken.Type != TokenType.RightParenthesis);
         }
 
         /// <summary>
         /// Parses a "var" for an IBTL let statement.
         /// </summary>
-        private void ParseVar(ASTNode node, Token lastToken, ref string contents)
+        private void ParseVar(ASTNode node, Token lastToken, ref string input)
         {
-            if (lastToken.Type != TokenType.LeftParenthesis)
+            int parenCount = 0;
+
+            // Trim off parenthesis, keeping track of the nesting level
+            // so that stupid people can nest expressions.
+            while (lastToken.Type == TokenType.LeftParenthesis)
             {
-                throw new ParserException("let statement not in (let (varlist)) form.");
+                parenCount++;
+                lastToken = m_lexer.GetToken(ref input);
             }
 
             // First attempt to add an identifier.
-
-            lastToken = m_lexer.GetToken(ref contents);
             if (lastToken.Type != TokenType.Identifier)
             {
                 throw new ParserException("let statement not in (let (varlist)) form.");
@@ -226,23 +236,22 @@ namespace Compiler
             node.AddToChildren(lastToken);
 
             // Now attempt to add a type.
-
-            lastToken = m_lexer.GetToken(ref contents);
+            lastToken = m_lexer.GetToken(ref input);
             if (lastToken.Type != TokenType.Type)
             {
                 throw new ParserException("let statement not in (let (varlist)) form.");
             }
 
-            node.AddToChildren(lastToken);
+            node.Children.Last().AddToChildren(lastToken);
 
-            lastToken = m_lexer.GetToken(ref contents);
-            if (lastToken.Type != TokenType.RightParenthesis)
+            while (parenCount-- > 0)
             {
-                throw new ParserException("let statement not in (let (varlist)) form.");
+                lastToken = m_lexer.GetToken(ref input);
+                if (lastToken == null || lastToken.Type != TokenType.RightParenthesis)
+                {
+                    throw new ParserException("unmatched parenthesis inside varlist.");
+                }
             }
-
-            // Get rid of the Right Parenthesis in this scope.
-            m_lexer.GetToken(ref contents);
         }
 
         /// <summary>
