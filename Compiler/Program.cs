@@ -16,15 +16,14 @@ namespace Compiler
             {
                 string contents = string.Empty;
 
-                foreach (string file in args)
+                try
                 {
-                    try
-                    {
-                        contents += File.ReadAllLines(file).SelectMany(c => c).ToString();
-                    } catch (Exception ex)
-                    {
-                        contents += ex.Message;
-                    }
+                    string input = string.Join("", File.ReadAllLines(args.First()).SelectMany(c => c));
+                    contents += new Parser().Parse(input).ToGforth();
+                }
+                catch (Exception ex)
+                {
+                    contents += ex.Message + "\n";
                 }
 
                 File.WriteAllText(outputFile, contents);
