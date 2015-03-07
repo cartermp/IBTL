@@ -136,7 +136,7 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleIfStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
         {
-            SemanticToken expr2 = tokenStack.Count == 3 ? tokenStack.Pop() : null;
+            SemanticToken expr2 = tokenStack.Count >= 3 ? tokenStack.Pop() : null;
 
             var expr1 = tokenStack.Pop();
             var predicate = tokenStack.Pop();
