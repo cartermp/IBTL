@@ -137,15 +137,21 @@ namespace Compiler
                 return;
             }
 
-            var peek = m_lexer.GetToken(ref contents);
-            if (peek != null && peek.Type != TokenType.RightParenthesis)
+            last = m_lexer.GetToken(ref contents);
+            if (last != null && last.Type != TokenType.RightParenthesis)
             {
-                ParseOper(node, peek, ref contents);
+                ParseOper(node, last, ref contents);
                 node.Token.Type = TokenType.BinaryOperator;
             }
             else
             {
                 node.Token.Type = TokenType.UnaryOperator;
+            }
+
+            last = m_lexer.GetToken(ref contents);
+            if (last.Type != TokenType.RightParenthesis)
+            {
+                throw new ParserException("Mismatches parenthesis in minus");
             }
         }
 
@@ -180,6 +186,12 @@ namespace Compiler
         {
             var lastToken = m_lexer.GetToken(ref contents);
             ParseOper(node, lastToken, ref contents);
+
+            lastToken = m_lexer.GetToken(ref contents);
+            if (lastToken.Type != TokenType.RightParenthesis)
+            {
+                throw new ParserException("Mismatched parenthesis in stdout statement.");
+            }
         }
 
         /// <summary>
@@ -306,6 +318,12 @@ namespace Compiler
         {
             var last = m_lexer.GetToken(ref contents);
             ParseOper(node, last, ref contents);
+
+            last = m_lexer.GetToken(ref contents);
+            if (last.Type != TokenType.RightParenthesis)
+            {
+                throw new ParserException("Mismatched parenethesis in binary operator.");
+            }
         }
 
         /// <summary>
@@ -322,6 +340,12 @@ namespace Compiler
             last = m_lexer.GetToken(ref contents);
 
             ParseOper(node, last, ref contents);
+
+            last = m_lexer.GetToken(ref contents);
+            if (last != null && last.Type != TokenType.RightParenthesis)
+            {
+                throw new ParserException("Mismatched parenethesis in binary operator.");
+            }
         }
 
         /// <summary>
@@ -340,6 +364,12 @@ namespace Compiler
             last = m_lexer.GetToken(ref contents);
 
             ParseOper(node, last, ref contents);
+
+            last = m_lexer.GetToken(ref contents);
+            if (last.Type != TokenType.RightParenthesis)
+            {
+                throw new ParserException("Mismatched parenethesis in binary operator.");
+            }
         }
 
         /// <summary>
@@ -356,13 +386,6 @@ namespace Compiler
                     node.Children.Add(new ASTNode(last));
 
                     ParseInner(last, ref contents, node.Children.Last());
-
-                    last = m_lexer.GetToken(ref contents);
-                    if (last.Type != TokenType.RightParenthesis)
-                    {
-                        throw new ParserException("oper with ( must match with ).");
-                    }
-
                     break;
                 case TokenType.Int:
                 case TokenType.Real:
@@ -395,12 +418,6 @@ namespace Compiler
                     node.Children.Add(new ASTNode(lastToken));
 
                     ParseInner(lastToken, ref contents, node.Children.Last());
-
-                    lastToken = m_lexer.GetToken(ref contents);
-                    if (lastToken.Type != TokenType.RightParenthesis)
-                    {
-                        throw new ParserException("expr with ( must match with ).");
-                    }
                     break;
                 case TokenType.Int:
                 case TokenType.Real:
