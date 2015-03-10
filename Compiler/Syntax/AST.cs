@@ -132,6 +132,9 @@ namespace Compiler.Syntax
                 expressionList.Add(tokenStack.Pop());
             }
 
+            // Due to the effects of being on the stack, these need to be back in proper order.
+            expressionList.Reverse();
+
             var predicate = tokenStack.Pop();
 
             string whileExpression = "begin " + predicate.Value + " while " + string.Join(" ", expressionList.Select(e => e.Value)) + " repeat";

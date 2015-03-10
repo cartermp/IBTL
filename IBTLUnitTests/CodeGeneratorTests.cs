@@ -749,5 +749,86 @@ namespace IBTLUnitTests
 
             Assert.AreEqual(expected, actual);
         }
+
+        /// <summary>
+        /// (while (> 5 3) (stdout 5) (+ 1 2) (- 1 2)) => "begin 5 3 > while 5 . 1 2 + 1 2 - repeat"
+        /// </summary>
+        [TestMethod]
+        public void WhileWithExprListTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "while", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int}
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3", Type = TokenType.Int}
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "stdout", Type = TokenType.Statement },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "1", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "2", Type = TokenType.Int }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "-", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "1", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "2", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "begin 5 3 > while 5 . 1 2 + 1 2 - repeat CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
     }
 }
