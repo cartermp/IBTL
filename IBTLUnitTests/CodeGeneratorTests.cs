@@ -462,7 +462,7 @@ namespace IBTLUnitTests
                                 },
                                 new ASTNode
                                 {
-                                    Token = new Token { Value = "3.0", Type = TokenType.Int }
+                                    Token = new Token { Value = "3.0", Type = TokenType.Real }
                                 }
                             }
                         },
@@ -480,7 +480,7 @@ namespace IBTLUnitTests
 
             // According to gforth, this comparison works.
 
-            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3.0 > if 7 else 2 endif CR";
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 s>f 3.0e f> if 7 else 2 endif CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -826,6 +826,87 @@ namespace IBTLUnitTests
             AST ast = new AST(nodes);
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "begin 5 3 > while 5 . 1 2 + 1 2 - repeat CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (if (> 5 3) 7 2)(while (> 5 3) (stdout 5)) => "begin 5 3 > while 5 . repeat"
+        /// </summary>
+        [TestMethod]
+        public void MixedIfAndWhileTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "if", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3", Type = TokenType.Int }
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "7", Type = TokenType.Int }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "2", Type = TokenType.Int }
+                        }
+                    }
+                },
+                new ASTNode
+                {
+                    Token = new Token { Value = "while", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int}
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3", Type = TokenType.Int}
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "stdout", Type = TokenType.Statement },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 3 > if 7 else 2 endif CR\n" + "begin 5 3 > while 5 . repeat CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
