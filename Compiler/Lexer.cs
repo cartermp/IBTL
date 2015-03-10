@@ -11,24 +11,15 @@ namespace Compiler
     public class Lexer
     {
         private Dictionary<string, Token> m_table = new Dictionary<string, Token>();
-        private Token m_peekedToken;
+        public Token LastLexedToken;
 
         /// <summary>
         /// Gets an IBTL token.  Uses the peeked token if available; otherwise, extracts from the input string.
         /// </summary>
         public Token GetToken(ref string input)
         {
-            m_peekedToken = null;
-            return PeekToken(ref input);
-        }
-
-        /// <summary>
-        /// Extracts a token from the input string, storing it in the temporary peek buffer.
-        /// </summary>
-        public Token PeekToken(ref string input)
-        {
-            m_peekedToken = GetTokenImpl(ref input);
-            return m_peekedToken;
+            LastLexedToken = GetTokenImpl(ref input);
+            return LastLexedToken;
         }
 
         /// <summary>

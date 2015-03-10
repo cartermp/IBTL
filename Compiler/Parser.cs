@@ -48,7 +48,7 @@ namespace Compiler
                 if (!string.IsNullOrWhiteSpace(contents))
                 {
                     ParseExpression(ref contents, node.Children == null ? node : node.BackChild());
-                    lastToken = m_lexer.GetToken(ref contents);
+                    lastToken = m_lexer.LastLexedToken;
                 }
             }
             else if (lastToken != null && lastToken.Type != TokenType.LeftParenthesis && lastToken.Type != TokenType.RightParenthesis)
