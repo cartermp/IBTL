@@ -97,7 +97,7 @@ namespace Compiler.Syntax
                     HandleUnaryOperator(ref tokenStack, parentToken);
                     break;
                 case TokenType.Statement:
-                    HandleStatement(ref tokenStack, parentToken);
+                    HandleStatement(ref tokenStack, parentToken, node.Children.Count);
                     break;
             }
         }
@@ -105,7 +105,7 @@ namespace Compiler.Syntax
         /// <summary>
         /// Delegates work to different Statement types.
         /// </summary>
-        private void HandleStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        private void HandleStatement(ref Stack<SemanticToken> tokenStack, Token parentToken, int numChildren)
         {
             switch (parentToken.Value.ToLower())
             {
@@ -115,7 +115,32 @@ namespace Compiler.Syntax
                 case "stdout":
                     HandleStdoutStatement(ref tokenStack, parentToken);
                     break;
+                case "while":
+                    HandleWhileStatement(ref tokenStack, parentToken, numChildren);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Handles generating gforth code for a while (while (predicate) (exprlist)) subtree.
+        /// </summary>
+        private void HandleWhileStatement(ref Stack<SemanticToken> tokenStack, Token parentToken, int numChildren)
+        {
+            var expressionList = new List<SemanticToken>();
+            while (expressionList.Count < numChildren - 1)
+            {
+                expressionList.Add(tokenStack.Pop());
+            }
+
+            var predicate = tokenStack.Pop();
+
+            string whileExpression = "begin " + predicate.Value + " while " + string.Join(" ", expressionList.Select(e => e.Value)) + " repeat";
+
+            tokenStack.Push(new SemanticToken
+            {
+                Type = TokenType.Statement,
+                Value = whileExpression
+            });
         }
 
         /// <summary>
@@ -183,12 +208,12 @@ namespace Compiler.Syntax
 
             if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real)
             {
-                operand.Value = ConvertNumberToGforthReal(operand);
+                operand.Value = ConvertTokenToGforthReal(operand);
             }
 
             if (operand.Type == TokenType.Real)
             {
-                string number = ConvertNumberToGforthReal(operand);
+                string number = ConvertTokenToGforthReal(operand);
                 string subExpression = number + " " + "f" + parentToken.Value;
 
                 tokenStack.Push(new SemanticToken
@@ -223,8 +248,8 @@ namespace Compiler.Syntax
 
             if (lhs.Type == TokenType.Real || rhs.Type == TokenType.Real)
             {
-                string left = ConvertNumberToGforthReal(lhs);
-                string right = ConvertNumberToGforthReal(rhs);
+                string left = ConvertTokenToGforthReal(lhs);
+                string right = ConvertTokenToGforthReal(rhs);
 
                 if (parentToken.Value == "^")
                 {
@@ -257,12 +282,12 @@ namespace Compiler.Syntax
             {
                 if (lhs.Type == TokenType.Real)
                 {
-                    lhs.Value = ConvertNumberToGforthReal(lhs);
+                    lhs.Value = ConvertTokenToGforthReal(lhs);
                 }
 
                 if (rhs.Type == TokenType.Real)
                 {
-                    rhs.Value = ConvertNumberToGforthReal(rhs);
+                    rhs.Value = ConvertTokenToGforthReal(rhs);
                 }
 
                 string expression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
@@ -289,8 +314,8 @@ namespace Compiler.Syntax
                 throw new SemanticException("Strings cannot be concatenated by non-strings.");
             }
 
-            string left = ConvertStringToGforthString(lhs);
-            string right = ConvertStringToGforthString(rhs);
+            string left = ConvertTokenToGforthString(lhs);
+            string right = ConvertTokenToGforthString(rhs);
 
             string subExpression = left + " " + right + " " + "s" + parentToken.Value;
 
@@ -304,7 +329,7 @@ namespace Compiler.Syntax
         /// <summary>
         /// Converts a numeric token into a GForth real.
         /// </summary>
-        private string ConvertNumberToGforthReal(SemanticToken token)
+        private string ConvertTokenToGforthReal(SemanticToken token)
         {
             return token.Type == TokenType.Int ? token.Value + " s>f"
                 : !token.Value.ToLower().Contains("e") ? token.Value + "e" : token.Value;
@@ -313,7 +338,7 @@ namespace Compiler.Syntax
         /// <summary>
         /// Converts a string token into a GForth string.
         /// </summary>
-        private string ConvertStringToGforthString(SemanticToken token)
+        private string ConvertTokenToGforthString(SemanticToken token)
         {
             return string.Format("s\" {0}\"", token.Value.Substring(1, token.Value.Length - 3));
         }
