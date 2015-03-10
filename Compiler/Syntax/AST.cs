@@ -123,11 +123,26 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleStdoutStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
         {
-            var expression = tokenStack.Pop().Value + " type";
+            string stdoutExpression = string.Empty;
+
+            var token = tokenStack.Pop();
+            switch (token.Type)
+            {
+                case TokenType.Int:
+                    stdoutExpression = token.Value + " .";
+                    break;
+                case TokenType.Real:
+                    stdoutExpression = token.Value + " f.";
+                    break;
+                case TokenType.String:
+                    stdoutExpression = token.Value + " type";
+                    break;
+            }
+
             tokenStack.Push(new SemanticToken
             {
                 Type = TokenType.Statement,
-                Value = expression
+                Value = stdoutExpression
             });
         }
 

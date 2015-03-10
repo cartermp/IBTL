@@ -490,7 +490,7 @@ namespace IBTLUnitTests
         /// (stdout ("hello" "world")) => "s" hello" s" world" s+ type".
         /// </summary>
         [TestMethod]
-        public void StdoutTest()
+        public void StdoutStringsTest()
         {
             var nodes = new List<ASTNode>
             {
@@ -519,6 +519,82 @@ namespace IBTLUnitTests
             };
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "s\" hello\" s\" world\" s+ type CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (stdout (12 13)) => "12 13 + .".
+        /// </summary>
+        [TestMethod]
+        public void StdoutIntsTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Type = TokenType.Statement, Value = "stdout" },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "12", Type = TokenType.Int }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "13", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "12 13 + . CR";
+            string actual = new AST(nodes).ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (stdout (12 13)) => "12 13 + .".
+        /// </summary>
+        [TestMethod]
+        public void StdoutRealsTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Type = TokenType.Statement, Value = "stdout" },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "+", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "12.0", Type = TokenType.Real }
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token{ Value = "13", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "12.0e 13 s>f f+ f. CR";
             string actual = new AST(nodes).ToGforth();
 
             Assert.AreEqual(expected, actual);
@@ -605,11 +681,11 @@ namespace IBTLUnitTests
                     {
                         new ASTNode
                         {
-                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                            Token = new Token { Value = "1.0", Type = TokenType.Real }
                         },
                         new ASTNode
                         {
-                            Token = new Token{ Value = "2", Type = TokenType.Int }
+                            Token = new Token { Value = "2", Type = TokenType.Int }
                         }
                     }
                 }
@@ -618,6 +694,57 @@ namespace IBTLUnitTests
             AST ast = new AST(nodes);
 
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "1.0e 2 s>f fmod CR";
+            string actual = ast.ToGforth();
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// (while (> 5 3) (stdout 5)) => "begin 5 3 > while 5 . repeat"
+        /// </summary>
+        [TestMethod]
+        public void BasicWhileTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = "while", Type = TokenType.Statement },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token { Value = ">", Type = TokenType.BinaryOperator },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int}
+                                },
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "3", Type = TokenType.Int}
+                                }
+                            }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token { Value = "stdout", Type = TokenType.Statement },
+                            Children = new List<ASTNode>
+                            {
+                                new ASTNode
+                                {
+                                    Token = new Token { Value = "5", Type = TokenType.Int }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            AST ast = new AST(nodes);
+
+            string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "begin 5 3 > while 5 . repeat CR";
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
