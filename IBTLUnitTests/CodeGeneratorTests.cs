@@ -478,8 +478,6 @@ namespace IBTLUnitTests
                 }
             };
 
-            // According to gforth, this comparison works.
-
             string expected = ":^ 1 swap 0 u+do over * loop nip ; \n\n" + "5 s>f 3.0e f> if 7 else 2 endif CR";
             string actual = new AST(nodes).ToGforth();
 
