@@ -14,6 +14,7 @@ namespace Compiler.Syntax
     public class AST
     {
         private List<ASTNode> mNodes;
+        private Dictionary<string, Tuple<Token, TokenType>> m_table = new Dictionary<string, Tuple<Token, TokenType>>(); 
 
         /// <summary>
         /// Initializes a new AST.
@@ -26,6 +27,19 @@ namespace Compiler.Syntax
         public AST(List<ASTNode> nodes)
         {
             mNodes = nodes;
+        }
+
+        public void AddSymbols(Dictionary<string, Token> symbolTable)
+        {
+            if (symbolTable != null)
+            {
+                foreach (var item in symbolTable.Keys)
+                {
+                    // Because we do not know the type of identifiers which aren't registered keywords,
+                    // we label them as undefined.  They are defined when a "let" statement binds them.
+                    m_table.Add(item, Tuple.Create(symbolTable[item], TokenType.Undefined));
+                }
+            }
         }
 
         public void Add(ASTNode node)
@@ -209,7 +223,7 @@ namespace Compiler.Syntax
                 parentToken.Value = "negate";
             }
 
-            if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real)
+            if (IsATrigOperand(parentToken) && operand.Type != TokenType.Real && operand.Type != TokenType.Identifier)
             {
                 operand.Value = ConvertTokenToGforthReal(operand);
             }
@@ -233,6 +247,42 @@ namespace Compiler.Syntax
                     Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
                     Value = subExpression
                 });
+            } 
+            else if (operand.Type == TokenType.Identifier)
+            {
+                Tuple<Token, TokenType> item;
+                if (m_table.TryGetValue(operand.Value, out item))
+                {
+                    if (item.Item2 == TokenType.Undefined)
+                    {
+                        throw new SemanticException("Unbound identifier: " + operand.Value);
+                    }
+                    
+                    if (operand.Type == TokenType.Real)
+                    {
+                        string number = ConvertTokenToGforthReal(operand);
+                        string subExpression = number + " " + "f" + parentToken.Value;
+
+                        tokenStack.Push(new SemanticToken
+                        {
+                            Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
+                            Value = subExpression
+                        });
+                    }
+                    else if (operand.Type == TokenType.Int)
+                    {
+                        string subExpression = operand.Value + " " + parentToken.Value;
+                        tokenStack.Push(new SemanticToken
+                        {
+                            Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
+                            Value = subExpression
+                        });
+                    }
+                }
+                else
+                {
+                    throw new SemanticException("Unknown identifier: " + operand.Value);
+                }
             }
         }
 

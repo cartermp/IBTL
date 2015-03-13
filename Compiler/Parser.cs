@@ -16,7 +16,8 @@ namespace Compiler
     /// </summary>
     public class Parser
     {
-        private Lexer m_lexer = new Lexer();
+        // fuck it, make it public
+        public Lexer m_lexer = new Lexer();
 
         /// <summary>
         /// Top-level parsing function.

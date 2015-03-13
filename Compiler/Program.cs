@@ -40,7 +40,13 @@ namespace Compiler
             {
                 try
                 {
-                    string gforth = new Parser().Parse(ibtl).ToGforth();
+                    var parser = new Parser();
+                    var tree = parser.Parse(ibtl);
+
+                    tree.AddSymbols(parser.m_lexer.SymbolTable);
+
+                    string gforth = tree.ToGforth();
+
                     Console.WriteLine("Equivalent Gforth:\n");
                     Console.WriteLine(gforth);
                 }

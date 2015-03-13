@@ -10,7 +10,7 @@ namespace Compiler
 {
     public class Lexer
     {
-        private Dictionary<string, Token> m_table = new Dictionary<string, Token>();
+        public Dictionary<string, Token> SymbolTable = new Dictionary<string, Token>();
         public Token LastLexedToken;
 
         /// <summary>
@@ -90,27 +90,27 @@ namespace Compiler
         /// </summary>
         public void PreloadTable()
         {
-            m_table.Add("true", new Token { Type = TokenType.True, Value = "true" });
-            m_table.Add("false", new Token { Type = TokenType.False, Value = "false" });
-
-            m_table.Add("and", new Token { Type = TokenType.BinaryOperator, Value = "and" });
-            m_table.Add("or", new Token { Type = TokenType.BinaryOperator, Value = "or" });
-
-            m_table.Add("not", new Token { Type = TokenType.UnaryOperator, Value = "not" });
-
-            m_table.Add("sin", new Token { Type = TokenType.UnaryOperator, Value = "sin" });
-            m_table.Add("cos", new Token { Type = TokenType.UnaryOperator, Value = "cos" });
-            m_table.Add("tan", new Token { Type = TokenType.UnaryOperator, Value = "tan" });
-
-            m_table.Add("int", new Token { Type = TokenType.Type, Value = "int" });
-            m_table.Add("real", new Token { Type = TokenType.Type, Value = "real" });
-            m_table.Add("bool", new Token { Type = TokenType.Type, Value = "bool" });
-            m_table.Add("string", new Token { Type = TokenType.Type, Value = "string" });
-
-            m_table.Add("let", new Token { Type = TokenType.Statement, Value = "let" });
-            m_table.Add("stdout", new Token { Type = TokenType.Statement, Value = "stdout" });
-            m_table.Add("while", new Token { Type = TokenType.Statement, Value = "while" });
-            m_table.Add("if", new Token { Type = TokenType.Statement, Value = "if" });
+            SymbolTable.Add("true", new Token { Type = TokenType.True, Value = "true" });
+            SymbolTable.Add("false", new Token { Type = TokenType.False, Value = "false" });
+            
+            SymbolTable.Add("and", new Token { Type = TokenType.BinaryOperator, Value = "and" });
+            SymbolTable.Add("or", new Token { Type = TokenType.BinaryOperator, Value = "or" });
+            
+            SymbolTable.Add("not", new Token { Type = TokenType.UnaryOperator, Value = "not" });
+            
+            SymbolTable.Add("sin", new Token { Type = TokenType.UnaryOperator, Value = "sin" });
+            SymbolTable.Add("cos", new Token { Type = TokenType.UnaryOperator, Value = "cos" });
+            SymbolTable.Add("tan", new Token { Type = TokenType.UnaryOperator, Value = "tan" });
+            
+            SymbolTable.Add("int", new Token { Type = TokenType.Type, Value = "int" });
+            SymbolTable.Add("real", new Token { Type = TokenType.Type, Value = "real" });
+            SymbolTable.Add("bool", new Token { Type = TokenType.Type, Value = "bool" });
+            SymbolTable.Add("string", new Token { Type = TokenType.Type, Value = "string" });
+            
+            SymbolTable.Add("let", new Token { Type = TokenType.Statement, Value = "let" });
+            SymbolTable.Add("stdout", new Token { Type = TokenType.Statement, Value = "stdout" });
+            SymbolTable.Add("while", new Token { Type = TokenType.Statement, Value = "while" });
+            SymbolTable.Add("if", new Token { Type = TokenType.Statement, Value = "if" });
         }
 
         /// <summary>
@@ -243,12 +243,14 @@ namespace Compiler
 
             Token t;
 
-            if (m_table.TryGetValue(tmp, out t))
+            if (SymbolTable.TryGetValue(tmp, out t))
             {
                 return t;
             }
 
-            return new Token { Type = TokenType.Identifier, Value = tmp };
+            SymbolTable.Add(tmp, new Token { Type = TokenType.Identifier, Value = tmp });
+
+            return SymbolTable[tmp];
         }
 
         private bool IsRelop(char c)
