@@ -1,0 +1,5 @@
+
+
+(let (x bool)(y int))
+(:= x true)(:= y (+ 1 2))
+(sin y)
