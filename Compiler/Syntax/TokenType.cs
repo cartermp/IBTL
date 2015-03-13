@@ -29,8 +29,12 @@ namespace Compiler.Syntax
         False,
         Boolean,
 
+        IntType,
+        RealType,
+        BoolType,
+        StringType,
+
         Statement,
-        Type,
         Identifier
     }
 }

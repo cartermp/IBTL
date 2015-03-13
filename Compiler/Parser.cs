@@ -250,7 +250,7 @@ namespace Compiler
 
             // Now attempt to add a type.
             lastToken = m_lexer.GetToken(ref input);
-            if (lastToken.Type != TokenType.Type)
+            if (lastToken.Type != TokenType.IntType && lastToken.Type != TokenType.Real && lastToken.Type != TokenType.BoolType && lastToken.Type != TokenType.StringType)
             {
                 throw new ParserException("let statement not in (let (varlist)) form.");
             }

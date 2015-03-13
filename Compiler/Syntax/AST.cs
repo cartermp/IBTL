@@ -148,6 +148,16 @@ namespace Compiler.Syntax
                 throw new SemanticException(identifier + " is unrecognized.");
             }
 
+            if (val.Item2 != expression.Type)
+            {
+                if (val.Item2 == TokenType.Boolean && (expression.Type != TokenType.True || expression.Type != TokenType.False))
+                {
+                    throw new SemanticException(string.Format(
+                        "\"{0}\" is of type \"{1}\".  Cannot assign \"{2}\" to \"{3}\" because it is of type {4}.",
+                        identifier, val.Item2, expression.Value, identifier, expression.Type));
+                }
+            }
+
             string expr = expression.Value + " " + identifier + " " + ((expression.Type == TokenType.Real) ? "f" : string.Empty) + "!";
 
             tokenStack.Push(new SemanticToken

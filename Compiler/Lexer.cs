@@ -102,10 +102,10 @@ namespace Compiler
             SymbolTable.Add("cos", new Token { Type = TokenType.UnaryOperator, Value = "cos" });
             SymbolTable.Add("tan", new Token { Type = TokenType.UnaryOperator, Value = "tan" });
             
-            SymbolTable.Add("int", new Token { Type = TokenType.Type, Value = "int" });
-            SymbolTable.Add("real", new Token { Type = TokenType.Type, Value = "real" });
-            SymbolTable.Add("bool", new Token { Type = TokenType.Type, Value = "bool" });
-            SymbolTable.Add("string", new Token { Type = TokenType.Type, Value = "string" });
+            SymbolTable.Add("int", new Token { Type = TokenType.IntType, Value = "int" });
+            SymbolTable.Add("real", new Token { Type = TokenType.RealType, Value = "real" });
+            SymbolTable.Add("bool", new Token { Type = TokenType.BoolType, Value = "bool" });
+            SymbolTable.Add("string", new Token { Type = TokenType.StringType, Value = "string" });
             
             SymbolTable.Add("let", new Token { Type = TokenType.Statement, Value = "let" });
             SymbolTable.Add("stdout", new Token { Type = TokenType.Statement, Value = "stdout" });

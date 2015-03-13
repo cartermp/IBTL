@@ -19,7 +19,13 @@ namespace Compiler
                 try
                 {
                     string input = string.Join("", File.ReadAllLines(args.First()).SelectMany(c => c));
-                    contents += new Parser().Parse(input).ToGforth();
+                    
+                    var parser = new Parser();
+                    var tree = parser.Parse(input);
+
+                    tree.AddSymbols(parser.m_lexer.SymbolTable);
+
+                    contents += tree.ToGforth();
                 }
                 catch (Exception ex)
                 {
