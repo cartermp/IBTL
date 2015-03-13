@@ -157,7 +157,7 @@ namespace Compiler.Syntax
                 }
             }
 
-            if (val.Item2 == TokenType.RealType)
+            if (val.Item2 == TokenType.RealType && expression.Type != TokenType.Real)
             {
                 expression.Value = expression.Value + " s>f";
             }
@@ -269,7 +269,7 @@ namespace Compiler.Syntax
                     stdoutExpression += token.Value + " f.";
                     break;
                 case TokenType.String:
-                    stdoutExpression += token.Value + " type";
+                    stdoutExpression += ConvertTokenToGforthString(token) + " type";
                     break;
                 case TokenType.Identifier:
                     Tuple<Token, TokenType> val;
@@ -426,7 +426,11 @@ namespace Compiler.Syntax
                 parentToken.Value = "mod";
             }
 
-            if (lhs.Type == TokenType.Real || rhs.Type == TokenType.Real)
+            if (!IsAPredicate(parentToken) && (lhs.Type == TokenType.Identifier || rhs.Type == TokenType.Identifier))
+            {
+                HandleIdentifierForBinary(ref tokenStack, parentToken, lhs, rhs);
+            }
+            else if (lhs.Type == TokenType.Real || rhs.Type == TokenType.Real)
             {
                 string left = ConvertTokenToGforthReal(lhs);
                 string right = ConvertTokenToGforthReal(rhs);
@@ -458,10 +462,6 @@ namespace Compiler.Syntax
             {
                 HandleStringConcatenation(tokenStack, parentToken, rhs, lhs);
             }
-            else if (!IsAPredicate(parentToken) && (lhs.Type == TokenType.Identifier || rhs.Type == TokenType.Identifier))
-            {
-                HandleIdentifierForBinary(ref tokenStack, parentToken, lhs, rhs);
-            }
             else if (IsAPredicate(parentToken))
             {
                 if (lhs.Type == TokenType.Real)
@@ -488,11 +488,11 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleIdentifierForBinary(ref Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken lhs, SemanticToken rhs)
         {
-            Tuple<Token, TokenType> valLhs;
-            Tuple<Token, TokenType> valRhs;
+            Tuple<Token, TokenType> valLhs = null;
+            Tuple<Token, TokenType> valRhs = null;
 
-            string gforthLhs = string.Empty;
-            string gforthRhs = string.Empty;
+            string gforthLhs = lhs.Value;
+            string gforthRhs = rhs.Value;
             bool isARealOperation = false;
             string subExpression = string.Empty;
 
@@ -503,14 +503,14 @@ namespace Compiler.Syntax
                     throw new SemanticException(lhs.Value + " is an unbound identifier.");
                 }
 
-                gforthLhs += lhs.Value + " @ ";
+                gforthLhs += " @ ";
 
                 if (valLhs.Item2 == TokenType.RealType)
                 {
                     isARealOperation = true;
                 }
             }
-            else
+            else if (lhs.Type == TokenType.Identifier)
             {
                 throw new SemanticException(lhs.Value + " is an unrecognized identifier.");
             }
@@ -522,33 +522,46 @@ namespace Compiler.Syntax
                     throw new SemanticException(rhs.Value + " is an unbound identifier.");
                 }
 
-                gforthRhs += rhs.Value + " @ ";
+                gforthRhs += " @ ";
 
                 if (valRhs.Item2 == TokenType.RealType)
                 {
                     isARealOperation = true;
                 }
             }
-            else
+            else if (rhs.Type == TokenType.Identifier)
             {
                 throw new SemanticException(rhs.Value + " is an unrecognized identifier.");
             }
 
             if (isARealOperation)
             {
-                if (valLhs.Item2 != TokenType.RealType)
+                gforthLhs = gforthLhs.Replace("@", "f@");
+                gforthRhs = gforthRhs.Replace("@", "f@");
+
+                if (valLhs != null && valLhs.Item2 != TokenType.RealType)
                 {
-                    gforthLhs += "s>f" + " ";
+                    gforthLhs += "s>f";
                 }
-                if (valRhs.Item2 != TokenType.RealType)
+                if (valRhs != null && valRhs.Item2 != TokenType.RealType)
                 {
-                    gforthRhs += "s>f" + " ";
+                    gforthRhs += "s>f";
+                }
+
+                if (lhs.Type != TokenType.Identifier && lhs.Type == TokenType.Int)
+                {
+                    gforthLhs += " s>f";
+                }
+
+                if (rhs.Type != TokenType.Identifier && rhs.Type == TokenType.Int)
+                {
+                    gforthRhs += " s>f";
                 }
 
                 tokenStack.Push(new SemanticToken
                 {
                     Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
-                    Value = gforthLhs + gforthRhs + "f" + parentToken.Value
+                    Value = gforthLhs + gforthRhs + " f" + parentToken.Value
                 });
             }
             else

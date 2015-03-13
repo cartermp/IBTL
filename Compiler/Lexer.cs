@@ -255,7 +255,7 @@ namespace Compiler
 
         private bool IsRelop(char c)
         {
-            return c == '>' || c == '-' || c == '*' || c == '=';
+            return c == '>' || c == '<' || c == '-' || c == '*' || c == '=';
         }
 
         private bool IsBinop(char c)
