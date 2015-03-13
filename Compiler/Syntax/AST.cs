@@ -282,7 +282,7 @@ namespace Compiler.Syntax
 
                         if (val.Item2 == TokenType.IntType)
                         {
-                            stdoutExpression += token.Value + " @ " +".";
+                            stdoutExpression += token.Value + " @ " + ".";
                         }
 
                         if (val.Item2 == TokenType.RealType)
@@ -536,8 +536,14 @@ namespace Compiler.Syntax
 
             if (isARealOperation)
             {
-                gforthLhs = gforthLhs.Replace("@", "f@");
-                gforthRhs = gforthRhs.Replace("@", "f@");
+                if (valLhs != null && valLhs.Item2 == TokenType.RealType)
+                {
+                    gforthLhs = gforthLhs.Replace("@", "f@");
+                }
+                if (valRhs != null && valRhs.Item2 == TokenType.RealType)
+                {
+                    gforthRhs = gforthRhs.Replace("@", "f@");
+                }
 
                 if (valLhs != null && valLhs.Item2 != TokenType.RealType)
                 {
@@ -552,7 +558,6 @@ namespace Compiler.Syntax
                 {
                     gforthLhs += " s>f";
                 }
-
                 if (rhs.Type != TokenType.Identifier && rhs.Type == TokenType.Int)
                 {
                     gforthRhs += " s>f";
