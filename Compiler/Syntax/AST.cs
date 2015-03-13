@@ -355,7 +355,7 @@ namespace Compiler.Syntax
                     throw new SemanticException(operand.Value + " is unbound identifier.");
                 }
 
-                if (operand.Type == TokenType.Real)
+                if (item.Item2 == TokenType.RealType)
                 {
                     string number = ConvertTokenToGforthReal(operand);
                     string subExpression = number + " @ " + "f" + parentToken.Value;
@@ -366,12 +366,12 @@ namespace Compiler.Syntax
                         Value = subExpression
                     });
                 }
-                else if (operand.Type == TokenType.Int)
+                else if (item.Item2 == TokenType.IntType)
                 {
-                    string subExpression = operand.Value + " @ " + parentToken.Value;
+                    string subExpression = operand.Value + " @ " + (IsATrigOperand(parentToken) ? "s>f f" : string.Empty) + parentToken.Value;
                     tokenStack.Push(new SemanticToken
                     {
-                        Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
+                        Type = IsAPredicate(parentToken) ? TokenType.Boolean : IsATrigOperand(parentToken) ? TokenType.Real : TokenType.Int,
                         Value = subExpression
                     });
                 }
