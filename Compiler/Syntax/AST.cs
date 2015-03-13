@@ -84,13 +84,12 @@ namespace Compiler.Syntax
         {
             if (node.Children == null || !node.Children.Any())
             {
-                var semanticToken = new SemanticToken
+                tokenStack.Push(new SemanticToken
                 {
                     Type = node.Token.Type,
                     Value = node.Token.Value
-                };
+                });
 
-                tokenStack.Push(semanticToken);
                 return;
             }
             else
@@ -115,6 +114,15 @@ namespace Compiler.Syntax
                     break;
                 case TokenType.Assignment:
                     HandleAssignmentOperator(ref tokenStack, parentToken);
+                    break;
+                case TokenType.Identifier:
+                    // This is for let statements.
+                    tokenStack.Push(new SemanticToken
+                    {
+                        Type = node.Token.Type,
+                        Value = node.Token.Value
+                    });
+
                     break;
             }
         }
@@ -165,6 +173,43 @@ namespace Compiler.Syntax
                 case "while":
                     HandleWhileStatement(ref tokenStack, parentToken, numChildren);
                     break;
+                case "let":
+                    HandleLetStatement(ref tokenStack, parentToken, numChildren);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Generates gforth code corresponding to a (let (varlist)) statement.
+        /// </summary>
+        private void HandleLetStatement(ref Stack<SemanticToken> tokenStack, Token parentToken, int numChildren)
+        {
+            var semanticTokens = new List<SemanticToken>();
+
+            while (numChildren-- > 0)
+            {
+                var identifier = tokenStack.Pop();
+                var type = tokenStack.Pop();
+
+                Tuple<Token, TokenType> tmp;
+                if (!m_table.TryGetValue(identifier.Value, out tmp))
+                {
+                    throw new SemanticException(identifier.Value + " not recognized.");
+                }
+
+                // We need to give the Identifier Token its bound type.
+                m_table[identifier.Value] = Tuple.Create(tmp.Item1, type.Type);
+
+                semanticTokens.Add(new SemanticToken
+                {
+                    Type = TokenType.Identifier,
+                    Value = "variable " + identifier.Value
+                });
+            }
+
+            foreach (var token in semanticTokens)
+            {
+                tokenStack.Push(token);
             }
         }
 
