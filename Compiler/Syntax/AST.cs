@@ -113,7 +113,40 @@ namespace Compiler.Syntax
                 case TokenType.Statement:
                     HandleStatement(ref tokenStack, parentToken, node.Children.Count);
                     break;
+                case TokenType.Assignment:
+                    HandleAssignmentOperator(ref tokenStack, parentToken);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Handles generating gforth code for an assignment operator (:= identifier (oper)).
+        /// </summary>
+        private void HandleAssignmentOperator(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        {
+            var expression = tokenStack.Pop();
+            string identifier = tokenStack.Pop().Value;
+
+            Tuple<Token, TokenType> val;
+            if (m_table.TryGetValue(identifier, out val))
+            {
+                if (val.Item2 == TokenType.Undefined)
+                {
+                    throw new SemanticException(identifier + " is unbound.");
+                }
+            }
+            else
+            {
+                throw new SemanticException(identifier + " is unrecognized.");
+            }
+
+            string expr = expression.Value + " " + identifier + " " + ((expression.Type == TokenType.Real) ? "f" : string.Empty) + "!";
+
+            tokenStack.Push(new SemanticToken
+            {
+                Type = expression.Type,
+                Value = expr
+            });
         }
 
         /// <summary>

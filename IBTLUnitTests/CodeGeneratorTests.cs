@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Compiler.Syntax;
 using System.Collections.Generic;
+using Compiler.Exceptions;
 
 namespace IBTLUnitTests
 {
@@ -908,6 +909,35 @@ namespace IBTLUnitTests
             string actual = ast.ToGforth();
 
             Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// Tests that an exception is thrown because the variable isn't bound yet.
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(SemanticException))]
+        public void BasicAssignTest()
+        {
+            var nodes = new List<ASTNode>
+            {
+                new ASTNode
+                {
+                    Token = new Token { Value = ":=", Type = TokenType.Assignment },
+                    Children = new List<ASTNode>
+                    {
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "x", Type = TokenType.Identifier }
+                        },
+                        new ASTNode
+                        {
+                            Token = new Token{ Value = "1.0", Type = TokenType.Real }
+                        }
+                    }
+                }
+            };
+
+            string actual = new AST(nodes).ToGforth();
         }
     }
 }
