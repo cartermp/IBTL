@@ -269,7 +269,7 @@ namespace Compiler.Syntax
                     stdoutExpression += token.Value + " f.";
                     break;
                 case TokenType.String:
-                    stdoutExpression += ConvertTokenToGforthString(token) + " type";
+                    stdoutExpression += token.Value + " type";
                     break;
                 case TokenType.Identifier:
                     Tuple<Token, TokenType> val;
