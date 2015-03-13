@@ -14,7 +14,7 @@ namespace Compiler.Syntax
     public class AST
     {
         private List<ASTNode> mNodes;
-        private Dictionary<string, Tuple<Token, TokenType>> m_table = new Dictionary<string, Tuple<Token, TokenType>>(); 
+        private Dictionary<string, Tuple<Token, TokenType>> m_table = new Dictionary<string, Tuple<Token, TokenType>>();
 
         /// <summary>
         /// Initializes a new AST.
@@ -247,42 +247,50 @@ namespace Compiler.Syntax
                     Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
                     Value = subExpression
                 });
-            } 
+            }
             else if (operand.Type == TokenType.Identifier)
             {
-                Tuple<Token, TokenType> item;
-                if (m_table.TryGetValue(operand.Value, out item))
-                {
-                    if (item.Item2 == TokenType.Undefined)
-                    {
-                        throw new SemanticException("Unbound identifier: " + operand.Value);
-                    }
-                    
-                    if (operand.Type == TokenType.Real)
-                    {
-                        string number = ConvertTokenToGforthReal(operand);
-                        string subExpression = number + " " + "f" + parentToken.Value;
+                HandleIdentifierForUnary(ref tokenStack, parentToken, operand);
+            }
+        }
 
-                        tokenStack.Push(new SemanticToken
-                        {
-                            Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
-                            Value = subExpression
-                        });
-                    }
-                    else if (operand.Type == TokenType.Int)
-                    {
-                        string subExpression = operand.Value + " " + parentToken.Value;
-                        tokenStack.Push(new SemanticToken
-                        {
-                            Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
-                            Value = subExpression
-                        });
-                    }
-                }
-                else
+        /// <summary>
+        /// Generates gforth code for when an identifier is used with a unary operator.
+        /// </summary>
+        private void HandleIdentifierForUnary(ref Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken operand)
+        {
+            Tuple<Token, TokenType> item;
+            if (m_table.TryGetValue(operand.Value, out item))
+            {
+                if (item.Item2 == TokenType.Undefined)
                 {
-                    throw new SemanticException("Unknown identifier: " + operand.Value);
+                    throw new SemanticException(operand.Value + " is unbound identifier.");
                 }
+
+                if (operand.Type == TokenType.Real)
+                {
+                    string number = ConvertTokenToGforthReal(operand);
+                    string subExpression = number + " @ " + "f" + parentToken.Value;
+
+                    tokenStack.Push(new SemanticToken
+                    {
+                        Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
+                        Value = subExpression
+                    });
+                }
+                else if (operand.Type == TokenType.Int)
+                {
+                    string subExpression = operand.Value + " @ " + parentToken.Value;
+                    tokenStack.Push(new SemanticToken
+                    {
+                        Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
+                        Value = subExpression
+                    });
+                }
+            }
+            else
+            {
+                throw new SemanticException("Unknown identifier: " + operand.Value);
             }
         }
 
@@ -331,6 +339,10 @@ namespace Compiler.Syntax
             {
                 HandleStringConcatenation(tokenStack, parentToken, rhs, lhs);
             }
+            else if (!IsAPredicate(parentToken) && (lhs.Type == TokenType.Identifier || rhs.Type == TokenType.Identifier))
+            {
+                HandleIdentifierForBinary(ref tokenStack, parentToken, lhs, rhs);
+            }
             else if (IsAPredicate(parentToken))
             {
                 if (lhs.Type == TokenType.Real)
@@ -348,6 +360,81 @@ namespace Compiler.Syntax
                 {
                     Type = TokenType.Boolean,
                     Value = expression
+                });
+            }
+        }
+
+        /// <summary>
+        /// Generates gforth code for a binary operation which uses one or more identifiers.
+        /// </summary>
+        private void HandleIdentifierForBinary(ref Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken lhs, SemanticToken rhs)
+        {
+            Tuple<Token, TokenType> val;
+
+            string gforthLhs = string.Empty;
+            string gforthRhs = string.Empty;
+            bool isARealOperation = false;
+            string subExpression = string.Empty;
+
+            if (lhs.Type == TokenType.Identifier && m_table.TryGetValue(lhs.Value, out val))
+            {
+                if (val.Item2 == TokenType.Undefined)
+                {
+                    throw new SemanticException(lhs.Value + " is an unbound identifier.");
+                }
+
+                gforthLhs += lhs.Value + " @ ";
+
+                if (val.Item2 == TokenType.Real)
+                {
+                    isARealOperation = true;
+                }
+            }
+            else
+            {
+                throw new SemanticException(lhs.Value + " is an unrecognized identifier.");
+            }
+
+            if (rhs.Type == TokenType.Identifier && m_table.TryGetValue(rhs.Value, out val))
+            {
+                if (val.Item2 == TokenType.Undefined)
+                {
+                    throw new SemanticException(rhs.Value + " is an unbound identifier.");
+                }
+
+                gforthRhs += rhs.Value + " @ ";
+
+                if (val.Item2 == TokenType.Real)
+                {
+                    isARealOperation = true;
+                }
+            }
+            else
+            {
+                throw new SemanticException(rhs.Value + " is an unrecognized identifier.");
+            }
+
+            if (isARealOperation)
+            {
+                gforthLhs += (lhs.Type != TokenType.Real) ? "s>f " : string.Empty;
+                gforthRhs += (rhs.Type != TokenType.Real) ? "s>f " : string.Empty;
+
+                subExpression = gforthLhs + " " + gforthRhs + " " + "f" + parentToken.Value;
+
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
+                    Value = subExpression
+                });
+            }
+            else
+            {
+                subExpression = lhs.Value + " " + rhs.Value + " " + parentToken.Value;
+
+                tokenStack.Push(new SemanticToken
+                {
+                    Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Int,
+                    Value = subExpression
                 });
             }
         }
