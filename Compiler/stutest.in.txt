@@ -5,3 +5,4 @@
 (sin y)
 (+ x y)
 (- x z)
+(if (> x y) (stdout z))

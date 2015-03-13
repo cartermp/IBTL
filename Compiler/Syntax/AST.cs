@@ -179,7 +179,7 @@ namespace Compiler.Syntax
             switch (parentToken.Value.ToLower())
             {
                 case "if":
-                    HandleIfStatement(ref tokenStack, parentToken);
+                    HandleIfStatement(ref tokenStack, parentToken, numChildren);
                     break;
                 case "stdout":
                     HandleStdoutStatement(ref tokenStack, parentToken);
@@ -263,13 +263,43 @@ namespace Compiler.Syntax
             switch (token.Type)
             {
                 case TokenType.Int:
-                    stdoutExpression = token.Value + " .";
+                    stdoutExpression += token.Value + " .";
                     break;
                 case TokenType.Real:
-                    stdoutExpression = token.Value + " f.";
+                    stdoutExpression += token.Value + " f.";
                     break;
                 case TokenType.String:
-                    stdoutExpression = token.Value + " type";
+                    stdoutExpression += token.Value + " type";
+                    break;
+                case TokenType.Identifier:
+                    Tuple<Token, TokenType> val;
+                    if (m_table.TryGetValue(token.Value, out val))
+                    {
+                        if (val.Item2 == TokenType.Undefined)
+                        {
+                            throw new SemanticException(token.Value + " is unbound in stdout statement.");
+                        }
+
+                        if (val.Item2 == TokenType.IntType)
+                        {
+                            stdoutExpression += token.Value + " @ " +".";
+                        }
+
+                        if (val.Item2 == TokenType.RealType)
+                        {
+                            stdoutExpression += token.Value + " @ " + "f.";
+                        }
+
+                        if (val.Item2 == TokenType.StringType)
+                        {
+                            stdoutExpression += token.Value + " @ " + "type";
+                        }
+                    }
+                    else
+                    {
+                        throw new SemanticException(token.Value + " is not recognized.");
+                    }
+
                     break;
             }
 
@@ -283,16 +313,16 @@ namespace Compiler.Syntax
         /// <summary>
         /// Handles generating GForth code for an (if expr expr)|(if expr expr expr) subtree.
         /// </summary>
-        private void HandleIfStatement(ref Stack<SemanticToken> tokenStack, Token parentToken)
+        private void HandleIfStatement(ref Stack<SemanticToken> tokenStack, Token parentToken, int numChildren)
         {
-            SemanticToken expr2 = tokenStack.Count >= 3 ? tokenStack.Pop() : null;
+            SemanticToken expr2 = numChildren == 3 ? tokenStack.Pop() : null;
 
             var expr1 = tokenStack.Pop();
             var predicate = tokenStack.Pop();
 
             if (predicate.Type != TokenType.Boolean)
             {
-                throw new SemanticException(predicate + " does not evaluate to true or false.");
+                throw new SemanticException(predicate.Value + " does not evaluate to true or false.");
             }
 
             string expression = predicate.Value + " if " + expr1.Value + (expr2 != null ? " else " + expr2.Value : string.Empty) + " endif";
