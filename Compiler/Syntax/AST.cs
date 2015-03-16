@@ -14,7 +14,13 @@ namespace Compiler.Syntax
     public class AST
     {
         private List<ASTNode> mNodes;
-        private Dictionary<string, Tuple<Token, TokenType>> m_table = new Dictionary<string, Tuple<Token, TokenType>>();
+
+        // Our full symbol table for the purposes of code generation.
+        //
+        // Token     --> The actual identifier
+        // TokenType --> A type the identifier is bound to be a (let identifier type) statement
+        // bool      --> A flag for if the identifier has been assigned a value
+        private Dictionary<string, Tuple<Token, TokenType, bool>> m_table = new Dictionary<string, Tuple<Token, TokenType, bool>>();
 
         /// <summary>
         /// Initializes a new AST.
@@ -37,7 +43,7 @@ namespace Compiler.Syntax
                 {
                     // Because we do not know the type of identifiers which aren't registered keywords,
                     // we label them as undefined.  They are defined when a "let" statement binds them.
-                    m_table.Add(item, Tuple.Create(symbolTable[item], TokenType.Undefined));
+                    m_table.Add(item, Tuple.Create(symbolTable[item], TokenType.Undefined, false));
                 }
             }
         }
@@ -134,7 +140,7 @@ namespace Compiler.Syntax
             var expression = tokenStack.Pop();
             string identifier = tokenStack.Pop().Value;
 
-            Tuple<Token, TokenType> val;
+            Tuple<Token, TokenType, bool> val;
             if (m_table.TryGetValue(identifier, out val))
             {
                 if (val.Item2 == TokenType.Undefined)
@@ -156,6 +162,10 @@ namespace Compiler.Syntax
                         identifier, val.Item2, expression.Value, identifier, expression.Type));
                 }
             }
+
+            // Need to set the flag in the table now, since it's going to be assgined a value.
+            // We create a new tuple because Tuples are read-only.
+            m_table[identifier] = Tuple.Create(val.Item1, val.Item2, true);
 
             if (val.Item2 == TokenType.RealType && expression.Type != TokenType.Real)
             {
@@ -205,14 +215,14 @@ namespace Compiler.Syntax
                 var identifier = tokenStack.Pop();
                 var type = tokenStack.Pop();
 
-                Tuple<Token, TokenType> tmp;
+                Tuple<Token, TokenType, bool> tmp;
                 if (!m_table.TryGetValue(identifier.Value, out tmp))
                 {
                     throw new SemanticException(identifier.Value + " not recognized.");
                 }
 
                 // We need to give the Identifier Token its bound type.
-                m_table[identifier.Value] = Tuple.Create(tmp.Item1, type.Type);
+                m_table[identifier.Value] = Tuple.Create(tmp.Item1, type.Type, false);
 
                 semanticTokens.Add(new SemanticToken
                 {
@@ -272,12 +282,17 @@ namespace Compiler.Syntax
                     stdoutExpression += token.Value + " type";
                     break;
                 case TokenType.Identifier:
-                    Tuple<Token, TokenType> val;
+                    Tuple<Token, TokenType, bool> val;
                     if (m_table.TryGetValue(token.Value, out val))
                     {
                         if (val.Item2 == TokenType.Undefined)
                         {
                             throw new SemanticException(token.Value + " is unbound in stdout statement.");
+                        }
+
+                        if (!val.Item3)
+                        {
+                            throw new SemanticException(token.Value + " has no value assigned.");
                         }
 
                         if (val.Item2 == TokenType.IntType)
@@ -381,15 +396,20 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleIdentifierForUnary(ref Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken operand)
         {
-            Tuple<Token, TokenType> item;
-            if (m_table.TryGetValue(operand.Value, out item))
+            Tuple<Token, TokenType, bool> val;
+            if (m_table.TryGetValue(operand.Value, out val))
             {
-                if (item.Item2 == TokenType.Undefined)
+                if (val.Item2 == TokenType.Undefined)
                 {
                     throw new SemanticException(operand.Value + " is unbound identifier.");
                 }
 
-                if (item.Item2 == TokenType.RealType)
+                if (!val.Item3)
+                {
+                    throw new SemanticException(operand.Value + " has no value assgined.");
+                }
+
+                if (val.Item2 == TokenType.RealType)
                 {
                     tokenStack.Push(new SemanticToken
                     {
@@ -397,7 +417,7 @@ namespace Compiler.Syntax
                         Value = operand.Value + " @ " + "f" + parentToken.Value
                     });
                 }
-                else if (item.Item2 == TokenType.IntType)
+                else if (val.Item2 == TokenType.IntType)
                 {
                     string subExpression = operand.Value + " @ " + (IsATrigOperand(parentToken) ? "s>f f" : string.Empty) + parentToken.Value;
                     tokenStack.Push(new SemanticToken
@@ -488,8 +508,8 @@ namespace Compiler.Syntax
         /// </summary>
         private void HandleIdentifierForBinary(ref Stack<SemanticToken> tokenStack, Token parentToken, SemanticToken lhs, SemanticToken rhs)
         {
-            Tuple<Token, TokenType> valLhs = null;
-            Tuple<Token, TokenType> valRhs = null;
+            Tuple<Token, TokenType, bool> valRhs = null;
+            Tuple<Token, TokenType, bool> valLhs = null;
 
             string gforthLhs = lhs.Value;
             string gforthRhs = rhs.Value;
@@ -501,6 +521,11 @@ namespace Compiler.Syntax
                 if (valLhs.Item2 == TokenType.Undefined)
                 {
                     throw new SemanticException(lhs.Value + " is an unbound identifier.");
+                }
+
+                if (!valLhs.Item3)
+                {
+                    throw new SemanticException(lhs.Value + " has no value assigned.");
                 }
 
                 gforthLhs += " @ ";
@@ -520,6 +545,11 @@ namespace Compiler.Syntax
                 if (valRhs.Item2 == TokenType.Undefined)
                 {
                     throw new SemanticException(rhs.Value + " is an unbound identifier.");
+                }
+
+                if (!valRhs.Item3)
+                {
+                    throw new SemanticException(rhs.Value + " has no value assigned.");
                 }
 
                 gforthRhs += " @ ";
