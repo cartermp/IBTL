@@ -215,14 +215,19 @@ namespace Compiler.Syntax
                 var identifier = tokenStack.Pop();
                 var type = tokenStack.Pop();
 
-                Tuple<Token, TokenType, bool> tmp;
-                if (!m_table.TryGetValue(identifier.Value, out tmp))
+                Tuple<Token, TokenType, bool> val;
+                if (!m_table.TryGetValue(identifier.Value, out val))
                 {
                     throw new SemanticException(identifier.Value + " not recognized.");
                 }
 
+                if (val.Item2 != TokenType.Undefined)
+                {
+                    throw new SemanticException(identifier.Value + " is already bound to type " + val.Item2.ToString());
+                }
+
                 // We need to give the Identifier Token its bound type.
-                m_table[identifier.Value] = Tuple.Create(tmp.Item1, type.Type, false);
+                m_table[identifier.Value] = Tuple.Create(val.Item1, type.Type, false);
 
                 semanticTokens.Add(new SemanticToken
                 {
@@ -414,7 +419,7 @@ namespace Compiler.Syntax
                     tokenStack.Push(new SemanticToken
                     {
                         Type = IsAPredicate(parentToken) ? TokenType.Boolean : TokenType.Real,
-                        Value = operand.Value + " @ " + "f" + parentToken.Value
+                        Value = operand.Value + " f@ " + "f" + parentToken.Value
                     });
                 }
                 else if (val.Item2 == TokenType.IntType)
